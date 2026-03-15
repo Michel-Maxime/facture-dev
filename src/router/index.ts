@@ -32,6 +32,11 @@ const router = createRouter({
           component: () => import('@/pages/invoices/index.vue'),
         },
         {
+          path: 'invoices/new',
+          name: 'invoice-new',
+          component: () => import('@/pages/invoices/new.vue'),
+        },
+        {
           path: 'invoices/:id',
           name: 'invoice-detail',
           component: () => import('@/pages/invoices/[id].vue'),

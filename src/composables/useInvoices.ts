@@ -141,6 +141,48 @@ export function useInvoices() {
     return true
   }
 
+  async function emitInvoice(id: string): Promise<{ invoiceNumber: string } | null> {
+    const { data, error } = await supabase.functions.invoke('generate-invoice-number', {
+      body: { invoiceId: id },
+    })
+
+    if (error) {
+      notifications.error('Erreur', error.message ?? "Impossible d'émettre la facture")
+      return null
+    }
+
+    const idx = invoices.value.findIndex((i) => i.id === id)
+    if (idx !== -1) invoices.value[idx] = data.invoice
+
+    notifications.success('Facture émise', `Numéro ${data.invoiceNumber} attribué`)
+    return { invoiceNumber: data.invoiceNumber }
+  }
+
+  async function cancelInvoice(id: string): Promise<boolean> {
+    const existing = invoices.value.find((i) => i.id === id)
+    if (existing && existing.status === 'PAID') {
+      notifications.error('Erreur', 'Une facture payée ne peut pas être annulée')
+      return false
+    }
+
+    const { error: err } = await supabase
+      .from('invoices')
+      .update({ status: 'CANCELLED', updated_at: new Date().toISOString() })
+      .eq('id', id)
+
+    if (err) {
+      notifications.error('Erreur', "Impossible d'annuler la facture")
+      return false
+    }
+
+    const idx = invoices.value.findIndex((i) => i.id === id)
+    if (idx !== -1) invoices.value[idx] = { ...invoices.value[idx], status: 'CANCELLED' }
+
+    notifications.success('Facture annulée')
+    await logAction('CANCEL_INVOICE', 'invoices', id)
+    return true
+  }
+
   async function logAction(action: string, entity: string, entityId: string) {
     if (!authStore.user) return
     await supabase.from('audit_logs').insert({
@@ -151,5 +193,5 @@ export function useInvoices() {
     })
   }
 
-  return { invoices, loading, error, fetchInvoices, getInvoice, createInvoice, updateInvoice, deleteInvoice }
+  return { invoices, loading, error, fetchInvoices, getInvoice, createInvoice, updateInvoice, deleteInvoice, emitInvoice, cancelInvoice }
 }

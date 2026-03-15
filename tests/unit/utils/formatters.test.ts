@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { formatCurrency, formatDate, formatSiret, formatIban, formatPercentage } from '@/utils/formatters'
+import { formatCurrency, formatDate, formatSiret, formatIban, formatPercentage, formatPhone } from '@/utils/formatters'
 
 describe('formatCurrency', () => {
   it('formats positive amount', () => {
@@ -50,6 +50,18 @@ describe('formatIban', () => {
     const result = formatIban('FR7630006000011234567890189')
     expect(result).toMatch(/^FR76/)
     expect(result).toContain(' ')
+  })
+})
+
+describe('formatPhone', () => {
+  it('formats 10-digit French phone number', () => {
+    const result = formatPhone('0612345678')
+    expect(result).toBe('06 12 34 56 78')
+  })
+
+  it('returns non-10-digit number as-is', () => {
+    expect(formatPhone('+33612345678')).toBe('+33612345678')
+    expect(formatPhone('123')).toBe('123')
   })
 })
 

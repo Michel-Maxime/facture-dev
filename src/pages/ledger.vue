@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { useLedger } from '@/composables/useLedger'
-import { formatCurrency, formatDate } from '@/utils/formatters'
-import DataTable from '@/components/ui/DataTable.vue'
-import Card from '@/components/ui/Card.vue'
+import { formatCurrency } from '@/utils/formatters'
+import LedgerTable from '@/components/ledger/LedgerTable.vue'
 
 const { entries, loading, fetchLedger } = useLedger()
 
@@ -17,22 +16,27 @@ const years = computed(() => {
   return y
 })
 
-const columns = [
-  { key: 'payment_date', label: 'Date de paiement', sortable: true },
-  { key: 'invoice_number', label: 'N° facture' },
-  { key: 'client_name', label: 'Client' },
-  { key: 'method', label: 'Mode de paiement' },
-  { key: 'amount', label: 'Montant', sortable: true },
-]
-
 const total = computed(() => entries.value.reduce((sum, e) => sum + e.amount, 0))
 
-const tableRows = computed(() =>
-  entries.value.map((e) => ({ ...e }))
-)
+function exportCsv() {
+  const header = 'Date encaissement;Référence;Client;Mode;N° pièce;Montant\n'
+  const rows = entries.value
+    .map((e) =>
+      [e.payment_date, e.invoice_number, e.client_name, e.method, e.reference ?? '', e.amount.toFixed(2)].join(';'),
+    )
+    .join('\n')
+
+  const bom = '\uFEFF' // UTF-8 BOM for Excel
+  const blob = new Blob([bom + header + rows], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `livre-recettes-${currentYear.value}.csv`
+  a.click()
+  URL.revokeObjectURL(url)
+}
 
 watch(currentYear, (year) => fetchLedger(year))
-
 onMounted(() => fetchLedger(currentYear.value))
 </script>
 
@@ -47,7 +51,6 @@ onMounted(() => fetchLedger(currentYear.value))
         </p>
       </div>
 
-      <!-- Year selector -->
       <div class="flex items-center gap-2">
         <label class="text-sm font-medium text-[#374151]">Exercice</label>
         <select
@@ -59,7 +62,7 @@ onMounted(() => fetchLedger(currentYear.value))
       </div>
     </div>
 
-    <!-- Summary -->
+    <!-- Summary cards -->
     <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
       <div class="bg-white border border-[#E5E7EB] rounded-xl p-5">
         <p class="text-xs font-medium text-[#6B7280] uppercase tracking-wide">Recettes totales</p>
@@ -81,35 +84,12 @@ onMounted(() => fetchLedger(currentYear.value))
       </div>
     </div>
 
-    <!-- Table -->
-    <DataTable :columns="columns" :rows="tableRows" :loading="loading">
-      <template #row="{ row }">
-        <td class="px-4 py-3 text-sm text-[#374151]">
-          {{ formatDate(row.payment_date as string) }}
-        </td>
-        <td class="px-4 py-3">
-          <span class="font-mono text-xs font-semibold text-[#7C3AED]">
-            {{ row.invoice_number || '—' }}
-          </span>
-        </td>
-        <td class="px-4 py-3 text-sm text-[#374151]">{{ row.client_name || '—' }}</td>
-        <td class="px-4 py-3 text-sm text-[#374151]">{{ row.method }}</td>
-        <td class="px-4 py-3">
-          <span class="font-mono text-sm font-semibold text-[#059669] tabular-nums">
-            {{ formatCurrency(row.amount as number) }}
-          </span>
-        </td>
-      </template>
-    </DataTable>
-
-    <!-- Total row -->
-    <template v-if="!loading && entries.length > 0">
-      <div class="bg-white border border-[#E5E7EB] rounded-xl px-4 py-3 flex items-center justify-end gap-6">
-        <span class="text-sm font-semibold text-[#374151]">Total {{ currentYear }}</span>
-        <span class="font-mono text-lg font-bold text-[#059669] tabular-nums">
-          {{ formatCurrency(total) }}
-        </span>
-      </div>
-    </template>
+    <!-- Ledger table with CSV export -->
+    <LedgerTable
+      :entries="entries"
+      :loading="loading"
+      :year="currentYear"
+      @export-csv="exportCsv"
+    />
   </div>
 </template>
