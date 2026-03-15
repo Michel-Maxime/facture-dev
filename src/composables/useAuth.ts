@@ -21,29 +21,25 @@ export function useAuth() {
   }
 
   async function register(data: RegisterFormData): Promise<boolean> {
-    const { data: authData, error: authError } = await supabase.auth.signUp({
+    const { error: authError } = await supabase.auth.signUp({
       email: data.email,
       password: data.password,
+      options: {
+        data: {
+          first_name: data.first_name,
+          last_name: data.last_name,
+          address: data.address,
+          city: data.city,
+          postal_code: data.postal_code,
+          siret: data.siret,
+          code_ape: data.code_ape,
+          company_created_at: data.company_created_at,
+        },
+      },
     })
 
-    if (authError || !authData.user) {
-      notifications.error("Erreur lors de l'inscription", authError?.message)
-      return false
-    }
-
-    const { error: profileError } = await supabase.from('profiles').insert({
-      id: authData.user.id,
-      first_name: data.first_name,
-      last_name: data.last_name,
-      address: data.address,
-      city: data.city,
-      postal_code: data.postal_code,
-      siret: data.siret,
-      company_created_at: data.company_created_at,
-    })
-
-    if (profileError) {
-      notifications.error('Erreur lors de la création du profil', profileError.message)
+    if (authError) {
+      notifications.error("Erreur lors de l'inscription", authError.message)
       return false
     }
 
