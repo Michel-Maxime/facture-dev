@@ -1,14 +1,18 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useUiStore } from '@/stores/ui'
 import { useAuth } from '@/composables/useAuth'
+import { useCotisations } from '@/composables/useCotisations'
 
 const route = useRoute()
 const authStore = useAuthStore()
 const uiStore = useUiStore()
 const { logout } = useAuth()
+
+// Use the cotisations composable for declaration deadline logic (business logic belongs in composables)
+const { nextDeadline: nextDeclarationDate, daysUntilDeadline: daysUntilDeclaration } = useCotisations(ref(0))
 
 interface NavItem {
   label: string
@@ -40,45 +44,6 @@ const userInitials = computed(() => {
   const profile = authStore.profile
   if (!profile) return 'U'
   return `${profile.first_name[0]}${profile.last_name[0]}`.toUpperCase()
-})
-
-// Next Urssaf declaration date based on declaration frequency
-const nextDeclarationDate = computed(() => {
-  const freq = authStore.profile?.declaration_freq ?? 'MONTHLY'
-  const now = new Date()
-  let next: Date
-
-  if (freq === 'MONTHLY') {
-    // 15th of next month
-    next = new Date(now.getFullYear(), now.getMonth() + 1, 15)
-  } else {
-    // Quarterly: 15th of the month following each quarter end (Apr, Jul, Oct, Jan)
-    const quarterEnds = [3, 6, 9, 12] // months after quarter ends (1-indexed)
-    const currentMonth = now.getMonth() + 1
-    const nextQuarterMonth = quarterEnds.find((m) => m > currentMonth) ?? 1
-    const year = nextQuarterMonth === 1 ? now.getFullYear() + 1 : now.getFullYear()
-    next = new Date(year, nextQuarterMonth - 1, 15)
-  }
-
-  return new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long' }).format(next)
-})
-
-const daysUntilDeclaration = computed(() => {
-  const freq = authStore.profile?.declaration_freq ?? 'MONTHLY'
-  const now = new Date()
-  let next: Date
-
-  if (freq === 'MONTHLY') {
-    next = new Date(now.getFullYear(), now.getMonth() + 1, 15)
-  } else {
-    const quarterEnds = [3, 6, 9, 12]
-    const currentMonth = now.getMonth() + 1
-    const nextQuarterMonth = quarterEnds.find((m) => m > currentMonth) ?? 1
-    const year = nextQuarterMonth === 1 ? now.getFullYear() + 1 : now.getFullYear()
-    next = new Date(year, nextQuarterMonth - 1, 15)
-  }
-
-  return Math.ceil((next.getTime() - now.getTime()) / 86_400_000)
 })
 </script>
 

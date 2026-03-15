@@ -13,7 +13,12 @@ export default mergeConfig(
       coverage: {
         provider: 'v8',
         reporter: ['text', 'json', 'html'],
-        include: ['src/utils/**', 'src/lib/constants.ts'],
+        include: [
+          'src/utils/**',
+          'src/lib/constants.ts',
+          'src/composables/useThresholds.ts',
+          'src/composables/useCotisations.ts',
+        ],
         thresholds: {
           global: {
             branches: 80,

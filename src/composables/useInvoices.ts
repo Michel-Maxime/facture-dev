@@ -18,6 +18,11 @@ export function useInvoices() {
     loading.value = true
     error.value = null
 
+    // Trigger overdue detection before fetching
+    await supabase.rpc('mark_overdue_invoices').catch(() => {
+      // Non-critical — continue even if this fails
+    })
+
     const { data, error: err } = await supabase
       .from('invoices')
       .select('*')
@@ -194,6 +199,20 @@ export function useInvoices() {
     return true
   }
 
+  async function sendInvoiceEmail(id: string, recipientEmail?: string): Promise<boolean> {
+    const { data, error } = await supabase.functions.invoke('send-invoice-email', {
+      body: { invoiceId: id, recipientEmail },
+    })
+
+    if (error) {
+      notifications.error('Erreur', error.message ?? "Impossible d'envoyer l'email")
+      return false
+    }
+
+    notifications.success('Email envoyé', `Facture transmise par email`)
+    return true
+  }
+
   async function logAction(action: string, entity: string, entityId: string) {
     if (!authStore.user) return
     await supabase.from('audit_logs').insert({
@@ -204,5 +223,5 @@ export function useInvoices() {
     })
   }
 
-  return { invoices, loading, error, fetchInvoices, getInvoice, createInvoice, updateInvoice, deleteInvoice, emitInvoice, cancelInvoice }
+  return { invoices, loading, error, fetchInvoices, getInvoice, createInvoice, updateInvoice, deleteInvoice, emitInvoice, cancelInvoice, sendInvoiceEmail }
 }

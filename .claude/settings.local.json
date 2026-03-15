@@ -7,7 +7,19 @@
       "Bash(pnpm install:*)",
       "Bash(pnpm run:*)",
       "Bash(pnpm test:*)",
-      "Bash(timeout:*)"
+      "Bash(timeout:*)",
+      "mcp__supabase__list_migrations",
+      "mcp__supabase__list_tables",
+      "mcp__supabase__get_project_url",
+      "mcp__supabase__apply_migration",
+      "mcp__supabase__get_publishable_keys",
+      "mcp__supabase__deploy_edge_function",
+      "mcp__supabase__execute_sql",
+      "Bash(grep:*)",
+      "Bash(cd:*)",
+      "mcp__supabase__get_logs",
+      "Bash(pnpm build:*)",
+      "Bash(pnpm vitest:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

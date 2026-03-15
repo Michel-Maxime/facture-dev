@@ -20,6 +20,38 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 262.1 83.3% 57.8%;
     --radius: 0.5rem;
+    --surface: 0 0% 100%;
+    --surface-secondary: 210 40% 96.1%;
+    --sidebar-bg: 0 0% 100%;
+    --sidebar-border: 214.3 31.8% 91.4%;
+    --text-primary: 222.2 84% 4.9%;
+    --text-secondary: 215.4 16.3% 46.9%;
+    --text-muted: 215 13% 65%;
+  }
+
+  .dark {
+    --background: 222 47% 9%;
+    --foreground: 210 40% 96%;
+    --card: 222 47% 12%;
+    --card-foreground: 210 40% 96%;
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 96%;
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 217 33% 20%;
+    --accent-foreground: 210 40% 96%;
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217 33% 20%;
+    --input: 217 33% 20%;
+    --ring: 262.1 83.3% 57.8%;
+    --surface: 222 47% 12%;
+    --surface-secondary: 222 47% 15%;
+    --sidebar-bg: 222 47% 7%;
+    --sidebar-border: 217 33% 18%;
+    --text-primary: 210 40% 96%;
+    --text-secondary: 215 20% 75%;
+    --text-muted: 215 20% 55%;
   }
 
   * {
@@ -28,5 +60,63 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
+  }
+
+  /* Dark mode overrides for hardcoded-color components */
+  .dark aside,
+  .dark [class*="bg-white"] {
+    background-color: hsl(var(--sidebar-bg)) !important;
+    border-color: hsl(var(--sidebar-border)) !important;
+  }
+
+  .dark [class*="bg-[#F9FAFB]"],
+  .dark [class*="bg-[#F3F4F6]"] {
+    background-color: hsl(var(--surface-secondary)) !important;
+  }
+
+  .dark [class*="text-[#111827]"],
+  .dark [class*="text-[#1F2937]"] {
+    color: hsl(var(--text-primary)) !important;
+  }
+
+  .dark [class*="text-[#374151]"],
+  .dark [class*="text-[#4B5563]"] {
+    color: hsl(var(--text-secondary)) !important;
+  }
+
+  .dark [class*="text-[#6B7280]"],
+  .dark [class*="text-[#9CA3AF]"] {
+    color: hsl(var(--text-muted)) !important;
+  }
+
+  .dark [class*="border-[#E5E7EB]"],
+  .dark [class*="border-[#D1D5DB]"] {
+    border-color: hsl(var(--border)) !important;
+  }
+
+  .dark main,
+  .dark .min-h-screen {
+    background-color: hsl(var(--background));
+  }
+
+  .dark table {
+    background-color: hsl(var(--card));
+    color: hsl(var(--card-foreground));
+  }
+
+  .dark thead tr {
+    background-color: hsl(var(--muted)) !important;
+  }
+
+  .dark tbody tr:hover {
+    background-color: hsl(var(--accent)) !important;
+  }
+
+  .dark input,
+  .dark select,
+  .dark textarea {
+    background-color: hsl(var(--input));
+    color: hsl(var(--foreground));
+    border-color: hsl(var(--border));
   }
 }
