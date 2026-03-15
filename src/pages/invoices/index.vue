@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useInvoices } from '@/composables/useInvoices'
+import { useClients } from '@/composables/useClients'
 import { formatCurrency, formatDate } from '@/utils/formatters'
 import type { InvoiceStatus } from '@/lib/types'
 import Button from '@/components/ui/Button.vue'
@@ -10,7 +11,9 @@ import InvoiceStatusBadge from '@/components/invoices/InvoiceStatusBadge.vue'
 
 const router = useRouter()
 const { invoices, loading, fetchInvoices } = useInvoices()
+const { clients, fetchClients } = useClients()
 
+const search = ref('')
 const activeTab = ref<InvoiceStatus | 'ALL'>('ALL')
 
 const tabs: { key: InvoiceStatus | 'ALL'; label: string }[] = [
@@ -31,9 +34,29 @@ const columns = [
   { key: 'actions', label: '' },
 ]
 
+const clientMap = computed(() => {
+  const map = new Map<string, string>()
+  for (const c of clients.value) map.set(c.id, c.name)
+  return map
+})
+
 const filteredInvoices = computed(() => {
-  if (activeTab.value === 'ALL') return invoices.value
-  return invoices.value.filter((i) => i.status === activeTab.value)
+  let list = invoices.value
+
+  if (activeTab.value !== 'ALL') {
+    list = list.filter((i) => i.status === activeTab.value)
+  }
+
+  const q = search.value.trim().toLowerCase()
+  if (q) {
+    list = list.filter((i) => {
+      const matchNumber = (i.number ?? '').toLowerCase().includes(q)
+      const matchClient = (clientMap.value.get(i.client_id) ?? i.client_id).toLowerCase().includes(q)
+      return matchNumber || matchClient
+    })
+  }
+
+  return list
 })
 
 const tableRows = computed(() =>
@@ -46,7 +69,9 @@ const tableRows = computed(() =>
   }))
 )
 
-onMounted(() => fetchInvoices())
+onMounted(async () => {
+  await Promise.all([fetchInvoices(), fetchClients()])
+})
 </script>
 
 <template>
@@ -67,6 +92,27 @@ onMounted(() => fetchInvoices())
           Nouvelle facture
         </Button>
       </RouterLink>
+    </div>
+
+    <!-- Search bar -->
+    <div class="flex items-center gap-3">
+      <div class="relative flex-1 max-w-sm">
+        <svg
+          class="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#9CA3AF] pointer-events-none"
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+          aria-hidden="true"
+        >
+          <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd" />
+        </svg>
+        <input
+          v-model="search"
+          type="text"
+          placeholder="Rechercher par n°, client..."
+          class="h-9 w-full rounded-md border border-[#E5E7EB] bg-white pl-8 pr-3 text-sm text-[#111827] placeholder-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#7C3AED] focus:border-[#7C3AED]"
+        />
+      </div>
     </div>
 
     <!-- Tabs -->
@@ -106,7 +152,7 @@ onMounted(() => fetchInvoices())
           </span>
         </td>
         <td class="px-4 py-3 text-sm text-[#374151]">
-          {{ row.client_id ?? '—' }}
+          {{ clientMap.get(row.client_id as string) ?? '—' }}
         </td>
         <td class="px-4 py-3 text-sm text-[#374151]">
           {{ formatDate(row.issue_date as string) }}

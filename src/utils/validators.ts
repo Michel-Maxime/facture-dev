@@ -68,6 +68,24 @@ export const invoiceSchema = z.object({
 
 export type InvoiceFormData = z.infer<typeof invoiceSchema>
 
+export const quoteLineSchema = z.object({
+  description: z.string().min(1, 'La description est requise'),
+  quantity: z.number().positive('La quantité doit être positive'),
+  unit_price: z.number().min(0, 'Le prix unitaire doit être positif'),
+  amount: z.number(),
+  sort_order: z.number().int().default(0),
+})
+
+export const quoteSchema = z.object({
+  client_id: z.string().uuid('Veuillez sélectionner un client'),
+  issue_date: z.string().min(1, "La date d'émission est requise"),
+  valid_until: z.string().min(1, 'La date de validité est requise'),
+  notes: z.string().optional().or(z.literal('')),
+  lines: z.array(quoteLineSchema).min(1, 'Au moins une ligne est requise'),
+})
+
+export type QuoteFormData = z.infer<typeof quoteSchema>
+
 export const loginSchema = z.object({
   email: z.string().email("L'email n'est pas valide"),
   password: z.string().min(6, 'Le mot de passe doit contenir au moins 6 caractères'),

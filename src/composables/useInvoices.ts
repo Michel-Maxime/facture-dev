@@ -128,9 +128,18 @@ export function useInvoices() {
   }
 
   async function deleteInvoice(id: string): Promise<boolean> {
-    const { error: err } = await supabase.from('invoices').delete().eq('id', id)
+    const existing = invoices.value.find((i) => i.id === id)
+    if (existing && existing.status !== 'DRAFT') {
+      notifications.error('Erreur', 'Seuls les brouillons peuvent être supprimés')
+      return false
+    }
 
-    if (err) {
+    const { error: err, count } = await supabase
+      .from('invoices')
+      .delete({ count: 'exact' })
+      .eq('id', id)
+
+    if (err || count === 0) {
       notifications.error('Erreur', 'Impossible de supprimer la facture')
       return false
     }
@@ -160,23 +169,25 @@ export function useInvoices() {
 
   async function cancelInvoice(id: string): Promise<boolean> {
     const existing = invoices.value.find((i) => i.id === id)
-    if (existing && existing.status === 'PAID') {
-      notifications.error('Erreur', 'Une facture payée ne peut pas être annulée')
+    if (existing && (existing.status === 'PAID' || existing.status === 'CANCELLED')) {
+      notifications.error('Erreur', 'Cette facture ne peut pas être annulée')
       return false
     }
 
-    const { error: err } = await supabase
+    const { data: updated, error: err } = await supabase
       .from('invoices')
       .update({ status: 'CANCELLED', updated_at: new Date().toISOString() })
       .eq('id', id)
+      .select()
+      .single()
 
-    if (err) {
+    if (err || !updated) {
       notifications.error('Erreur', "Impossible d'annuler la facture")
       return false
     }
 
     const idx = invoices.value.findIndex((i) => i.id === id)
-    if (idx !== -1) invoices.value[idx] = { ...invoices.value[idx], status: 'CANCELLED' }
+    if (idx !== -1) invoices.value[idx] = updated
 
     notifications.success('Facture annulée')
     await logAction('CANCEL_INVOICE', 'invoices', id)
