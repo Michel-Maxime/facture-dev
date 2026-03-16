@@ -19,9 +19,11 @@ export function useInvoices() {
     error.value = null
 
     // Trigger overdue detection before fetching
-    await supabase.rpc('mark_overdue_invoices').catch(() => {
+    try {
+      await supabase.rpc('mark_overdue_invoices')
+    } catch {
       // Non-critical — continue even if this fails
-    })
+    }
 
     const { data, error: err } = await supabase
       .from('invoices')
