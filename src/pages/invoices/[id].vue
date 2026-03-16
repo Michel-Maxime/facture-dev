@@ -20,7 +20,7 @@ const router = useRouter()
 const authStore = useAuthStore()
 const { getInvoice, emitInvoice } = useInvoices()
 const { payments, loading: paymentsLoading, fetchPayments, recordPayment } = usePayments()
-const { downloadPdf } = usePdf()
+const { downloadPdf, downloadStoredPdf } = usePdf()
 const { getClient } = useClients()
 
 const invoiceId = computed(() => route.params.id as string)
@@ -95,8 +95,13 @@ async function handleRecordPayment() {
   }
 }
 
-function handleDownloadPdf() {
+async function handleDownloadPdf() {
   if (!invoice.value || !client.value || !authStore.profile) return
+  // Use stored PDF if available (emitted invoices), otherwise fall back to client-side
+  if (invoice.value.pdf_url && invoice.value.number) {
+    await downloadStoredPdf(invoice.value.pdf_url, invoice.value.number)
+    return
+  }
   const data: PdfInvoiceData = {
     invoice: invoice.value,
     lines: lines.value,
