@@ -2,12 +2,14 @@ import { ref } from 'vue'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/auth'
 import { useNotificationsStore } from '@/stores/notifications'
+import { useAuditLog } from '@/composables/useAuditLog'
 import type { Client } from '@/lib/types'
 import type { ClientFormData } from '@/utils/validators'
 
 export function useClients() {
   const authStore = useAuthStore()
   const notifications = useNotificationsStore()
+  const { logAction } = useAuditLog()
 
   const clients = ref<Client[]>([])
   const loading = ref(false)
@@ -119,16 +121,6 @@ export function useClients() {
     notifications.success('Client supprimé')
     await logAction('DELETE_CLIENT', 'clients', id)
     return true
-  }
-
-  async function logAction(action: string, entity: string, entityId: string) {
-    if (!authStore.user) return
-    await supabase.from('audit_logs').insert({
-      user_id: authStore.user.id,
-      action,
-      entity,
-      entity_id: entityId,
-    })
   }
 
   return { clients, loading, error, fetchClients, getClient, createClient, updateClient, deleteClient }

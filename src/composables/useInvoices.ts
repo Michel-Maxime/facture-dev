@@ -2,12 +2,14 @@ import { ref } from 'vue'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/auth'
 import { useNotificationsStore } from '@/stores/notifications'
+import { useAuditLog } from '@/composables/useAuditLog'
 import type { Invoice, InvoiceLine } from '@/lib/types'
 import type { InvoiceFormData } from '@/utils/validators'
 
 export function useInvoices() {
   const authStore = useAuthStore()
   const notifications = useNotificationsStore()
+  const { logAction } = useAuditLog()
 
   const invoices = ref<Invoice[]>([])
   const loading = ref(false)
@@ -18,9 +20,9 @@ export function useInvoices() {
     loading.value = true
     error.value = null
 
-    // Trigger overdue detection before fetching
+    // Trigger overdue detection before fetching (scoped to current user)
     try {
-      await supabase.rpc('mark_overdue_invoices')
+      await supabase.rpc('mark_overdue_invoices', { p_user_id: authStore.user.id })
     } catch {
       // Non-critical — continue even if this fails
     }
@@ -213,16 +215,6 @@ export function useInvoices() {
 
     notifications.success('Email envoyé', `Facture transmise par email`)
     return true
-  }
-
-  async function logAction(action: string, entity: string, entityId: string) {
-    if (!authStore.user) return
-    await supabase.from('audit_logs').insert({
-      user_id: authStore.user.id,
-      action,
-      entity,
-      entity_id: entityId,
-    })
   }
 
   return { invoices, loading, error, fetchInvoices, getInvoice, createInvoice, updateInvoice, deleteInvoice, emitInvoice, cancelInvoice, sendInvoiceEmail }

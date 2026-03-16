@@ -2,12 +2,14 @@ import { ref } from 'vue'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/auth'
 import { useNotificationsStore } from '@/stores/notifications'
+import { useAuditLog } from '@/composables/useAuditLog'
 import type { Quote, QuoteLine } from '@/lib/types'
 import type { QuoteFormData } from '@/utils/validators'
 
 export function useQuotes() {
   const authStore = useAuthStore()
   const notifications = useNotificationsStore()
+  const { logAction } = useAuditLog()
 
   const quotes = ref<Quote[]>([])
   const loading = ref(false)
@@ -300,16 +302,6 @@ export function useQuotes() {
     await logAction('CONVERT_QUOTE', 'quotes', quoteId)
 
     return invoice.id
-  }
-
-  async function logAction(action: string, entity: string, entityId: string) {
-    if (!authStore.user) return
-    await supabase.from('audit_logs').insert({
-      user_id: authStore.user.id,
-      action,
-      entity,
-      entity_id: entityId,
-    })
   }
 
   return {
