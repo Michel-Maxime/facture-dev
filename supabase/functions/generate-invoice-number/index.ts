@@ -1,14 +1,30 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+function json(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { 'Content-Type': 'application/json', ...corsHeaders },
+  });
+}
+
 Deno.serve(async (req: Request) => {
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders });
+  }
+
   if (req.method !== 'POST') {
-    return new Response('Method not allowed', { status: 405 });
+    return json({ error: 'Method not allowed' }, 405);
   }
 
   const authHeader = req.headers.get('Authorization');
   if (!authHeader) {
-    return new Response(JSON.stringify({ error: 'Missing authorization' }), { status: 401 });
+    return json({ error: 'Missing authorization' }, 401);
   }
 
   const supabase = createClient(
@@ -20,15 +36,14 @@ Deno.serve(async (req: Request) => {
   const token = authHeader.replace('Bearer ', '');
   const { data: { user }, error: authError } = await supabase.auth.getUser(token);
   if (authError || !user) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+    return json({ error: 'Unauthorized' }, 401);
   }
 
   const { invoiceId } = await req.json();
   if (!invoiceId) {
-    return new Response(JSON.stringify({ error: 'invoiceId is required' }), { status: 400 });
+    return json({ error: 'invoiceId is required' }, 400);
   }
 
-  // Fetch the invoice to verify ownership and get issue_date
   const { data: invoice, error: invoiceError } = await supabase
     .from('invoices')
     .select('id, user_id, status, issue_date')
@@ -36,15 +51,15 @@ Deno.serve(async (req: Request) => {
     .single();
 
   if (invoiceError || !invoice) {
-    return new Response(JSON.stringify({ error: 'Invoice not found' }), { status: 404 });
+    return json({ error: 'Invoice not found' }, 404);
   }
 
   if (invoice.user_id !== user.id) {
-    return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403 });
+    return json({ error: 'Forbidden' }, 403);
   }
 
   if (invoice.status !== 'DRAFT') {
-    return new Response(JSON.stringify({ error: 'Only DRAFT invoices can be emitted' }), { status: 422 });
+    return json({ error: 'Only DRAFT invoices can be emitted' }, 422);
   }
 
   const year = new Date(invoice.issue_date).getFullYear();
@@ -54,7 +69,7 @@ Deno.serve(async (req: Request) => {
     .rpc('generate_invoice_number', { p_user_id: user.id, p_year: year });
 
   if (seqError || !seqResult || seqResult.length === 0) {
-    return new Response(JSON.stringify({ error: 'Failed to generate invoice number' }), { status: 500 });
+    return json({ error: 'Failed to generate invoice number' }, 500);
   }
 
   const { seq_number, invoice_number } = seqResult[0];
@@ -74,7 +89,7 @@ Deno.serve(async (req: Request) => {
     .single();
 
   if (updateError || !updated) {
-    return new Response(JSON.stringify({ error: 'Failed to emit invoice' }), { status: 500 });
+    return json({ error: 'Failed to emit invoice' }, 500);
   }
 
   // Insert audit log
@@ -86,8 +101,16 @@ Deno.serve(async (req: Request) => {
     details: { invoice_number, seq_number },
   });
 
-  return new Response(
-    JSON.stringify({ invoiceNumber: invoice_number, sequenceNumber: seq_number, invoice: updated }),
-    { headers: { 'Content-Type': 'application/json' } },
-  );
+  // Chain PDF generation (non-blocking — best effort)
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+  fetch(`${supabaseUrl}/functions/v1/generate-pdf`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': authHeader,
+    },
+    body: JSON.stringify({ invoiceId }),
+  }).catch((err) => console.error('generate-pdf chain failed:', err));
+
+  return json({ invoiceNumber: invoice_number, sequenceNumber: seq_number, invoice: updated });
 });

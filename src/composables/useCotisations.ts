@@ -37,18 +37,29 @@ export function useCotisations(revenue: { value: number }) {
     const now = new Date()
 
     if (freq === 'MONTHLY') {
-      // 15th of next month
-      return new Date(now.getFullYear(), now.getMonth() + 1, 15)
+      // Last day of next month
+      // new Date(year, month+2, 0) gives the last day of month+1 (0-indexed)
+      const nextMonth = now.getMonth() + 2 // next month, 0-indexed+2 = last day trick
+      return new Date(now.getFullYear(), nextMonth, 0)
     }
 
-    // Quarterly: deadline is the 15th of the month following each quarter end
+    // Quarterly: deadlines are the last day of the month following each quarter end
     // Quarter ends: March (Q1), June (Q2), September (Q3), December (Q4)
-    // Deadlines: 15 April, 15 July, 15 October, 15 January
-    const deadlineMonths = [3, 6, 9, 12] // 1-indexed months (April=4→index 3)
-    const currentMonth = now.getMonth() + 1
-    const nextDeadlineMonth = deadlineMonths.find((m) => m > currentMonth) ?? 1
-    const year = nextDeadlineMonth === 1 ? now.getFullYear() + 1 : now.getFullYear()
-    return new Date(year, nextDeadlineMonth - 1, 15)
+    // Deadlines: April 30, July 31, October 31, January 31
+    // Stored as [month, day] pairs (1-indexed months)
+    const deadlines: [number, number][] = [
+      [4, 30],  // April 30
+      [7, 31],  // July 31
+      [10, 31], // October 31
+      [1, 31],  // January 31 (next year)
+    ]
+    const currentMonth = now.getMonth() + 1 // 1-indexed
+    const found = deadlines.find(([m]) => m > currentMonth)
+    if (found) {
+      return new Date(now.getFullYear(), found[0] - 1, found[1])
+    }
+    // Wrap to January 31 of next year
+    return new Date(now.getFullYear() + 1, 0, 31)
   }
 
   // Next declaration deadline formatted in French (e.g. "15 avril 2026")

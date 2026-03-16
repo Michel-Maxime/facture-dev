@@ -79,7 +79,24 @@ Deno.serve(async (req: Request) => {
     return json({ error: 'Email service not configured (missing RESEND_API_KEY)' }, 503);
   }
 
-  const emailBody = {
+  // Try to attach the stored PDF if available
+  let attachments: Array<{ filename: string; content: string }> = [];
+  if (invoice.pdf_url) {
+    const { data: pdfData, error: downloadError } = await supabase.storage
+      .from('invoices')
+      .download(invoice.pdf_url);
+
+    if (!downloadError && pdfData) {
+      const arrayBuffer = await pdfData.arrayBuffer();
+      const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+      attachments = [{
+        filename: `${invoice.number}.pdf`,
+        content: base64,
+      }];
+    }
+  }
+
+  const emailBody: Record<string, unknown> = {
     from: `${senderName} <noreply@facture.dev>`,
     to: [toEmail],
     subject: `Facture ${invoice.number}`,
@@ -90,6 +107,10 @@ Deno.serve(async (req: Request) => {
       <p>Cordialement,<br>${senderName}</p>
     `,
   };
+
+  if (attachments.length > 0) {
+    emailBody.attachments = attachments;
+  }
 
   const resendRes = await fetch('https://api.resend.com/emails', {
     method: 'POST',
@@ -113,8 +134,8 @@ Deno.serve(async (req: Request) => {
     action: 'SEND_INVOICE_EMAIL',
     entity: 'invoices',
     entity_id: invoiceId,
-    details: { to: toEmail, resend_id: resendData.id },
+    details: { to: toEmail, resend_id: resendData.id, has_pdf: attachments.length > 0 },
   });
 
-  return json({ success: true, emailId: resendData.id });
+  return json({ success: true, emailId: resendData.id, hasPdfAttachment: attachments.length > 0 });
 });

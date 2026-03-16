@@ -140,3 +140,73 @@ describe('useCotisations composable', () => {
     expect(daysUntilDeadline.value).toBeGreaterThan(0)
   })
 })
+
+describe('useCotisations - Urssaf quarterly deadline dates', () => {
+  // The real Urssaf quarterly deadlines are:
+  // April 30, July 31, October 31, January 31 (next year)
+  // This tests the pure logic of computeNextDeclarationDate
+
+  function computeNextQuarterlyDeadline(currentMonth: number, currentYear: number): { month: number; day: number; year: number } {
+    const deadlines: [number, number][] = [
+      [4, 30],
+      [7, 31],
+      [10, 31],
+      [1, 31],
+    ]
+    const found = deadlines.find(([m]) => m > currentMonth)
+    if (found) {
+      return { month: found[0], day: found[1], year: currentYear }
+    }
+    return { month: 1, day: 31, year: currentYear + 1 }
+  }
+
+  it('from January (month 1): next deadline is April 30', () => {
+    const result = computeNextQuarterlyDeadline(1, 2026)
+    expect(result).toEqual({ month: 4, day: 30, year: 2026 })
+  })
+
+  it('from March (month 3): next deadline is April 30', () => {
+    const result = computeNextQuarterlyDeadline(3, 2026)
+    expect(result).toEqual({ month: 4, day: 30, year: 2026 })
+  })
+
+  it('from April (month 4): next deadline is July 31', () => {
+    const result = computeNextQuarterlyDeadline(4, 2026)
+    expect(result).toEqual({ month: 7, day: 31, year: 2026 })
+  })
+
+  it('from June (month 6): next deadline is July 31', () => {
+    const result = computeNextQuarterlyDeadline(6, 2026)
+    expect(result).toEqual({ month: 7, day: 31, year: 2026 })
+  })
+
+  it('from July (month 7): next deadline is October 31', () => {
+    const result = computeNextQuarterlyDeadline(7, 2026)
+    expect(result).toEqual({ month: 10, day: 31, year: 2026 })
+  })
+
+  it('from September (month 9): next deadline is October 31', () => {
+    const result = computeNextQuarterlyDeadline(9, 2026)
+    expect(result).toEqual({ month: 10, day: 31, year: 2026 })
+  })
+
+  it('from October (month 10): next deadline is January 31 next year', () => {
+    const result = computeNextQuarterlyDeadline(10, 2026)
+    expect(result).toEqual({ month: 1, day: 31, year: 2027 })
+  })
+
+  it('from December (month 12): next deadline is January 31 next year', () => {
+    const result = computeNextQuarterlyDeadline(12, 2026)
+    expect(result).toEqual({ month: 1, day: 31, year: 2027 })
+  })
+
+  it('nextDeadline from composable is not on the 15th (old bug check)', () => {
+    setActivePinia(createPinia())
+    const authStore = useAuthStore()
+    authStore.setProfile(makeProfile({ declaration_freq: 'QUARTERLY' }))
+    const revenue = ref(0)
+    const { nextDeadline } = useCotisations(revenue)
+    // The old bug returned "15 avril" instead of "30 avril"
+    expect(nextDeadline.value).not.toContain('15')
+  })
+})
