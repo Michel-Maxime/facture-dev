@@ -10,7 +10,6 @@ import { useAuthStore } from '@/stores/auth'
 import { useNotificationsStore } from '@/stores/notifications'
 import { formatCurrency, formatDate } from '@/utils/formatters'
 import type { Invoice, InvoiceLine, Client, Payment } from '@/lib/types'
-import type { PdfInvoiceData } from '@/utils/pdf-template'
 import Button from '@/components/ui/Button.vue'
 import Card from '@/components/ui/Card.vue'
 import Modal from '@/components/ui/Modal.vue'
@@ -22,7 +21,7 @@ const router = useRouter()
 const authStore = useAuthStore()
 const { getInvoice, emitInvoice, duplicateInvoice } = useInvoices()
 const { payments, loading: paymentsLoading, fetchPayments, recordPayment } = usePayments()
-const { downloadPdf, downloadStoredPdf } = usePdf()
+const { downloadDraftPdf, downloadStoredPdf } = usePdf()
 const { getClient } = useClients()
 const { createCreditNote } = useCreditNotes()
 
@@ -137,19 +136,14 @@ async function handleRecordPayment() {
 }
 
 async function handleDownloadPdf() {
-  if (!invoice.value || !client.value || !authStore.profile) return
-  // Use stored PDF if available (emitted invoices), otherwise fall back to client-side
+  if (!invoice.value) return
+  // Use stored PDF if available (emitted invoices), otherwise use preview-pdf Edge Function
   if (invoice.value.pdf_url && invoice.value.number) {
     await downloadStoredPdf(invoice.value.pdf_url, invoice.value.number)
     return
   }
-  const data: PdfInvoiceData = {
-    invoice: invoice.value,
-    lines: lines.value,
-    client: client.value,
-    profile: authStore.profile,
-  }
-  downloadPdf(data)
+  // For drafts: use preview-pdf Edge Function
+  await downloadDraftPdf(invoice.value.id, `brouillon-${invoice.value.id.slice(0, 8)}`)
 }
 
 const subtotal = computed(() => lines.value.reduce((sum, l) => sum + l.amount, 0))

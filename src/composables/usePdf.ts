@@ -1,42 +1,39 @@
 import { supabase } from '@/lib/supabase'
 import { useNotificationsStore } from '@/stores/notifications'
-import type { PdfInvoiceData } from '@/utils/pdf-template'
-import { buildInvoiceHtml } from '@/utils/pdf-template'
 
 export function usePdf() {
   const notifications = useNotificationsStore()
 
-  function openHtmlInWindow(html: string): Window | null {
-    const win = window.open('', '_blank')
-    if (!win) return null
-    const doc = win.document
-    doc.open()
-    doc.write(html)
-    doc.close()
-    return win
-  }
-
-  function downloadPdf(data: PdfInvoiceData) {
-    const html = buildInvoiceHtml(data)
-    const win = openHtmlInWindow(html)
-    if (!win) {
-      notifications.error('Erreur', "Impossible d'ouvrir la fenêtre d'impression")
-      return
-    }
-    win.addEventListener('load', () => {
-      win.print()
+  /**
+   * Downloads a draft invoice as PDF via the preview-pdf Edge Function.
+   * Works for any invoice status (DRAFT or emitted).
+   */
+  async function downloadDraftPdf(invoiceId: string, filename: string): Promise<boolean> {
+    const { data, error } = await supabase.functions.invoke('preview-pdf', {
+      body: { invoiceId },
     })
-    notifications.success('PDF', 'Utilisez "Enregistrer en PDF" dans la boîte de dialogue')
-  }
 
-  function printInvoice(data: PdfInvoiceData) {
-    const html = buildInvoiceHtml(data)
-    const win = openHtmlInWindow(html)
-    if (!win) {
-      notifications.error('Erreur', "Impossible d'ouvrir la fenêtre d'impression")
-      return
+    if (error || !data?.pdf) {
+      notifications.error('Erreur', "Impossible de générer l'aperçu PDF")
+      return false
     }
-    win.addEventListener('load', () => win.print())
+
+    // Decode base64 to blob
+    const binary = atob(data.pdf)
+    const bytes = new Uint8Array(binary.length)
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i)
+    }
+    const blob = new Blob([bytes], { type: 'application/pdf' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${filename}.pdf`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+    return true
   }
 
   async function downloadStoredPdf(pdfUrl: string, invoiceNumber: string): Promise<boolean> {
@@ -60,5 +57,5 @@ export function usePdf() {
     return true
   }
 
-  return { downloadPdf, printInvoice, downloadStoredPdf }
+  return { downloadDraftPdf, downloadStoredPdf }
 }
