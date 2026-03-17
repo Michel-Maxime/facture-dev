@@ -22,7 +22,7 @@ function formatDate(dateStr: string): string {
   return new Intl.DateTimeFormat('fr-FR').format(new Date(dateStr));
 }
 
-async function buildInvoicePdf(invoice: any, lines: any[], client: any, profile: any): Promise<Uint8Array> {
+async function buildInvoicePdf(invoice: any, lines: any[], client: any, profile: any, supabase: any): Promise<Uint8Array> {
   const pdfDoc = await PDFDocument.create();
   const page = pdfDoc.addPage([595, 842]); // A4
   const { width, height } = page.getSize();
@@ -39,9 +39,43 @@ async function buildInvoicePdf(invoice: any, lines: any[], client: any, profile:
   const marginL = 50;
   const marginR = width - 50;
 
+  // ── LOGO (optional) ───────────────────────────────────────────────────
+  let headerTextX = marginL;
+  if (profile.logo_url) {
+    try {
+      const { data: logoData } = await supabase.storage
+        .from('logos')
+        .download(profile.logo_url);
+
+      if (logoData) {
+        const logoBytes = new Uint8Array(await logoData.arrayBuffer());
+        const mimeType = profile.logo_url.endsWith('.png') ? 'image/png' : 'image/jpeg';
+
+        let logoImage;
+        if (mimeType === 'image/png') {
+          logoImage = await pdfDoc.embedPng(logoBytes);
+        } else {
+          logoImage = await pdfDoc.embedJpg(logoBytes);
+        }
+
+        const dims = logoImage.scaleToFit(120, 50);
+        page.drawImage(logoImage, {
+          x: marginL,
+          y: y - dims.height + 18,
+          width: dims.width,
+          height: dims.height,
+        });
+
+        headerTextX = marginL + dims.width + 12;
+      }
+    } catch {
+      // Logo fetch failed — continue without it
+    }
+  }
+
   // ── HEADER ────────────────────────────────────────────────────────────
   page.drawText(`${profile.first_name} ${profile.last_name}`, {
-    x: marginL, y, font: fontBold, size: 18, color: purple,
+    x: headerTextX, y, font: fontBold, size: 18, color: purple,
   });
   page.drawText('FACTURE', {
     x: marginR - 120, y, font: fontBold, size: 22, color: black,
@@ -216,7 +250,7 @@ Deno.serve(async (req: Request) => {
   if (!client) return json({ error: 'Client not found' }, 404);
   if (!invoice.number) return json({ error: 'Invoice has no number — emit it first' }, 422);
 
-  const pdfBytes = await buildInvoicePdf(invoice, lines, client, profile);
+  const pdfBytes = await buildInvoicePdf(invoice, lines, client, profile, supabase);
 
   const storagePath = `${user.id}/${invoice.number}.pdf`;
   const { error: uploadError } = await supabase.storage
