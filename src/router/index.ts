@@ -42,6 +42,21 @@ const router = createRouter({
           component: () => import('@/pages/invoices/[id].vue'),
         },
         {
+          path: 'invoices/:id/edit',
+          name: 'invoice-edit',
+          component: () => import('@/pages/invoices/edit.vue'),
+        },
+        {
+          path: 'credit-notes',
+          name: 'credit-notes',
+          component: () => import('@/pages/credit-notes/index.vue'),
+        },
+        {
+          path: 'credit-notes/:id',
+          name: 'credit-note-detail',
+          component: () => import('@/pages/credit-notes/[id].vue'),
+        },
+        {
           path: 'quotes',
           name: 'quotes',
           component: () => import('@/pages/quotes/index.vue'),

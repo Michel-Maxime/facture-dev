@@ -5,6 +5,7 @@ import { useInvoices } from '@/composables/useInvoices'
 import { usePayments } from '@/composables/usePayments'
 import { usePdf } from '@/composables/usePdf'
 import { useClients } from '@/composables/useClients'
+import { useCreditNotes } from '@/composables/useCreditNotes'
 import { useAuthStore } from '@/stores/auth'
 import { formatCurrency, formatDate } from '@/utils/formatters'
 import type { Invoice, InvoiceLine, Client, Payment } from '@/lib/types'
@@ -18,10 +19,11 @@ import Input from '@/components/ui/Input.vue'
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
-const { getInvoice, emitInvoice } = useInvoices()
+const { getInvoice, emitInvoice, duplicateInvoice } = useInvoices()
 const { payments, loading: paymentsLoading, fetchPayments, recordPayment } = usePayments()
 const { downloadPdf, downloadStoredPdf } = usePdf()
 const { getClient } = useClients()
+const { createCreditNote } = useCreditNotes()
 
 const invoiceId = computed(() => route.params.id as string)
 
@@ -32,6 +34,8 @@ const lines = ref<InvoiceLine[]>([])
 const client = ref<Client | null>(null)
 
 const emitting = ref(false)
+const duplicating = ref(false)
+const creatingCreditNote = ref(false)
 
 async function handleEmitInvoice() {
   if (!invoice.value) return
@@ -40,6 +44,26 @@ async function handleEmitInvoice() {
   emitting.value = false
   if (result) {
     await load()
+  }
+}
+
+async function handleDuplicate() {
+  if (!invoice.value) return
+  duplicating.value = true
+  const newInvoice = await duplicateInvoice(invoice.value.id)
+  duplicating.value = false
+  if (newInvoice) {
+    router.push(`/invoices/${newInvoice.id}`)
+  }
+}
+
+async function handleCreateCreditNote() {
+  if (!invoice.value) return
+  creatingCreditNote.value = true
+  const creditNote = await createCreditNote(invoice.value.id)
+  creatingCreditNote.value = false
+  if (creditNote) {
+    router.push(`/credit-notes/${creditNote.id}`)
   }
 }
 
@@ -177,6 +201,29 @@ onMounted(load)
             Émettre la facture
           </Button>
           <Button
+            v-if="invoice.status === 'DRAFT'"
+            variant="outline"
+            size="md"
+            @click="router.push(`/invoices/${invoice.id}/edit`)"
+          >
+            <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+            </svg>
+            Modifier
+          </Button>
+          <Button
+            v-if="invoice.status === 'SENT' || invoice.status === 'OVERDUE'"
+            variant="outline"
+            size="md"
+            :loading="creatingCreditNote"
+            @click="handleCreateCreditNote"
+          >
+            <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
+            </svg>
+            Corriger (avoir)
+          </Button>
+          <Button
             v-if="invoice.status === 'SENT'"
             variant="default"
             size="md"
@@ -186,6 +233,18 @@ onMounted(load)
               <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
             </svg>
             Enregistrer le paiement
+          </Button>
+          <Button
+            variant="outline"
+            size="md"
+            :loading="duplicating"
+            @click="handleDuplicate"
+          >
+            <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path d="M7 9a2 2 0 012-2h6a2 2 0 012 2v6a2 2 0 01-2 2H9a2 2 0 01-2-2V9z" />
+              <path d="M5 3a2 2 0 00-2 2v6a2 2 0 002 2V5h8a2 2 0 00-2-2H5z" />
+            </svg>
+            Dupliquer
           </Button>
           <Button variant="outline" size="md" @click="handleDownloadPdf">
             <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">

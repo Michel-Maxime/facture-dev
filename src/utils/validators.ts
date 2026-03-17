@@ -86,6 +86,15 @@ export const quoteSchema = z.object({
 
 export type QuoteFormData = z.infer<typeof quoteSchema>
 
+export const creditNoteSchema = z.object({
+  original_invoice_id: z.string().uuid(),
+  issue_date: z.string().min(1, "La date est requise"),
+  reason: z.string().optional().or(z.literal('')),
+  lines: z.array(invoiceLineSchema).min(1, 'Au moins une ligne est requise'),
+})
+
+export type CreditNoteFormData = z.infer<typeof creditNoteSchema>
+
 export const loginSchema = z.object({
   email: z.string().email("L'email n'est pas valide"),
   password: z.string().min(6, 'Le mot de passe doit contenir au moins 6 caractères'),

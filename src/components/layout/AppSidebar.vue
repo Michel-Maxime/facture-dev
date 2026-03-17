@@ -25,6 +25,7 @@ const navItems: NavItem[] = [
   { label: 'Factures', path: '/invoices', icon: 'invoices' },
   { label: 'Devis', path: '/quotes', icon: 'quotes' },
   { label: 'Clients', path: '/clients', icon: 'clients' },
+  { label: 'Avoirs', path: '/credit-notes', icon: 'credit-notes' },
   { label: 'Livre de recettes', path: '/ledger', icon: 'ledger' },
   { label: 'Paramètres', path: '/settings', icon: 'settings' },
 ]
@@ -160,6 +161,25 @@ const userInitials = computed(() => {
           <circle cx="9" cy="7" r="4" />
           <path d="M23 21v-2a4 4 0 00-3-3.87" />
           <path d="M16 3.13a4 4 0 010 7.75" />
+        </svg>
+
+        <!-- Credit notes icon -->
+        <svg
+          v-else-if="item.icon === 'credit-notes'"
+          class="w-4 h-4 shrink-0"
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+          <polyline points="14 2 14 8 20 8" />
+          <line x1="12" y1="18" x2="12" y2="12" />
+          <line x1="9" y1="15" x2="15" y2="15" />
         </svg>
 
         <!-- Ledger icon -->

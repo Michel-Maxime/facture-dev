@@ -342,6 +342,92 @@ export type Database = {
           last_number?: number
         }
       }
+      credit_note_sequences: {
+        Row: {
+          user_id: string
+          year: number
+          last_number: number
+        }
+        Insert: {
+          user_id: string
+          year: number
+          last_number?: number
+        }
+        Update: {
+          last_number?: number
+        }
+      }
+      credit_notes: {
+        Row: {
+          id: string
+          user_id: string
+          original_invoice_id: string
+          number: string | null
+          issue_date: string
+          subtotal: number
+          vat_rate: number
+          vat_amount: number
+          total: number
+          status: 'DRAFT' | 'SENT'
+          reason: string | null
+          pdf_url: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          original_invoice_id: string
+          number?: string | null
+          issue_date: string
+          subtotal: number
+          vat_rate?: number
+          vat_amount?: number
+          total: number
+          status?: 'DRAFT' | 'SENT'
+          reason?: string | null
+          pdf_url?: string | null
+        }
+        Update: {
+          number?: string | null
+          issue_date?: string
+          subtotal?: number
+          vat_rate?: number
+          vat_amount?: number
+          total?: number
+          status?: 'DRAFT' | 'SENT'
+          reason?: string | null
+          pdf_url?: string | null
+          updated_at?: string
+        }
+      }
+      credit_note_lines: {
+        Row: {
+          id: string
+          credit_note_id: string
+          description: string
+          quantity: number
+          unit_price: number
+          amount: number
+          sort_order: number
+        }
+        Insert: {
+          id?: string
+          credit_note_id: string
+          description: string
+          quantity: number
+          unit_price: number
+          amount: number
+          sort_order?: number
+        }
+        Update: {
+          description?: string
+          quantity?: number
+          unit_price?: number
+          amount?: number
+          sort_order?: number
+        }
+      }
     }
     Views: {
       dashboard_stats: {
@@ -365,6 +451,10 @@ export type Database = {
         Args: { p_user_id: string; p_year: number }
         Returns: Array<{ seq_number: number; quote_number: string }>
       }
+      generate_credit_note_number: {
+        Args: { p_user_id: string; p_year: number }
+        Returns: Array<{ seq_number: number; credit_note_number: string }>
+      }
     }
     Enums: {
       vat_regime: 'FRANCHISE' | 'SUBJECT'
@@ -385,6 +475,9 @@ export type Payment = Database['public']['Tables']['payments']['Row']
 export type Quote = Database['public']['Tables']['quotes']['Row']
 export type QuoteLine = Database['public']['Tables']['quote_lines']['Row']
 export type AuditLog = Database['public']['Tables']['audit_logs']['Row']
+export type CreditNote = Database['public']['Tables']['credit_notes']['Row']
+export type CreditNoteLine = Database['public']['Tables']['credit_note_lines']['Row']
+export type CreditNoteStatus = Database['public']['Tables']['credit_notes']['Row']['status']
 export type InvoiceStatus = Database['public']['Enums']['invoice_status']
 export type QuoteStatus = Database['public']['Enums']['quote_status']
 export type ClientType = Database['public']['Enums']['client_type']

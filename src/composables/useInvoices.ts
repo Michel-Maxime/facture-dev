@@ -203,6 +203,135 @@ export function useInvoices() {
     return true
   }
 
+  /**
+   * Fully updates a DRAFT invoice: replaces header fields AND all lines.
+   */
+  async function updateInvoiceFull(id: string, formData: InvoiceFormData): Promise<Invoice | null> {
+    const existing = invoices.value.find((i) => i.id === id)
+    if (existing && existing.status !== 'DRAFT') {
+      notifications.error('Erreur', 'Seuls les brouillons peuvent être modifiés')
+      return null
+    }
+
+    const subtotal = formData.lines.reduce((sum, l) => sum + l.amount, 0)
+    const vatAmount = subtotal * formData.vat_rate
+    const total = subtotal + vatAmount
+
+    const { data, error: err } = await supabase
+      .from('invoices')
+      .update({
+        client_id: formData.client_id,
+        issue_date: formData.issue_date,
+        service_date: formData.service_date,
+        due_date: formData.due_date,
+        payment_term_days: formData.payment_term_days,
+        payment_method: formData.payment_method,
+        vat_rate: formData.vat_rate,
+        vat_amount: vatAmount,
+        subtotal,
+        total,
+        notes: formData.notes || null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (err || !data) {
+      notifications.error('Erreur', 'Impossible de mettre à jour la facture')
+      return null
+    }
+
+    // Replace all lines
+    await supabase.from('invoice_lines').delete().eq('invoice_id', id)
+
+    const lines = formData.lines.map((l, i) => ({
+      invoice_id: id,
+      description: l.description,
+      quantity: l.quantity,
+      unit_price: l.unit_price,
+      amount: l.amount,
+      sort_order: i,
+    }))
+
+    const { error: linesErr } = await supabase.from('invoice_lines').insert(lines)
+
+    if (linesErr) {
+      notifications.error('Erreur', 'Impossible de mettre à jour les lignes')
+      return null
+    }
+
+    const idx = invoices.value.findIndex((i) => i.id === id)
+    if (idx !== -1) invoices.value[idx] = data
+
+    notifications.success('Facture mise à jour')
+    await logAction('UPDATE_INVOICE', 'invoices', id)
+    return data
+  }
+
+  /**
+   * Duplicates an invoice as a new DRAFT with the same client and lines but today's dates.
+   */
+  async function duplicateInvoice(id: string): Promise<Invoice | null> {
+    if (!authStore.user) return null
+
+    const result = await getInvoice(id)
+    if (!result) return null
+
+    const { invoice: source, lines: sourceLines } = result
+
+    const today = new Date().toISOString().slice(0, 10)
+    const dueDate = new Date(Date.now() + source.payment_term_days * 86_400_000).toISOString().slice(0, 10)
+
+    const { data: newInvoice, error: invErr } = await supabase
+      .from('invoices')
+      .insert({
+        user_id: authStore.user.id,
+        client_id: source.client_id,
+        issue_date: today,
+        service_date: today,
+        due_date: dueDate,
+        payment_term_days: source.payment_term_days,
+        payment_method: source.payment_method,
+        vat_rate: source.vat_rate,
+        vat_amount: source.vat_amount,
+        subtotal: source.subtotal,
+        total: source.total,
+        notes: source.notes,
+        status: 'DRAFT',
+      })
+      .select()
+      .single()
+
+    if (invErr || !newInvoice) {
+      notifications.error('Erreur', 'Impossible de dupliquer la facture')
+      return null
+    }
+
+    if (sourceLines.length > 0) {
+      const lines = sourceLines.map((l) => ({
+        invoice_id: newInvoice.id,
+        description: l.description,
+        quantity: l.quantity,
+        unit_price: l.unit_price,
+        amount: l.amount,
+        sort_order: l.sort_order,
+      }))
+
+      const { error: linesErr } = await supabase.from('invoice_lines').insert(lines)
+
+      if (linesErr) {
+        notifications.error('Erreur', 'Impossible de copier les lignes')
+        return null
+      }
+    }
+
+    invoices.value.unshift(newInvoice)
+    notifications.success('Facture dupliquée', 'Nouveau brouillon créé')
+    await logAction('DUPLICATE_INVOICE', 'invoices', newInvoice.id)
+    return newInvoice
+  }
+
   async function sendInvoiceEmail(id: string, recipientEmail?: string): Promise<boolean> {
     const { data, error } = await supabase.functions.invoke('send-invoice-email', {
       body: { invoiceId: id, recipientEmail },
@@ -217,5 +346,5 @@ export function useInvoices() {
     return true
   }
 
-  return { invoices, loading, error, fetchInvoices, getInvoice, createInvoice, updateInvoice, deleteInvoice, emitInvoice, cancelInvoice, sendInvoiceEmail }
+  return { invoices, loading, error, fetchInvoices, getInvoice, createInvoice, updateInvoice, updateInvoiceFull, deleteInvoice, emitInvoice, cancelInvoice, sendInvoiceEmail, duplicateInvoice }
 }
