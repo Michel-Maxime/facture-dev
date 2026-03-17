@@ -181,7 +181,7 @@ const onSubmit = handleSubmit(async (values) => {
       </Card>
 
       <!-- Logo section -->
-      <Card title="Logo" description="Apparaît en haut de vos factures (PNG, JPEG · max 512 Ko)" class="mb-4">
+      <Card title="Logo" description="Apparaît en haut de vos factures (PNG ou JPEG · max 512 Ko)" class="mb-4">
         <div class="flex items-center gap-4">
           <!-- Preview -->
           <div class="w-24 h-14 rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] flex items-center justify-center overflow-hidden shrink-0">
@@ -209,7 +209,7 @@ const onSubmit = handleSubmit(async (values) => {
               <input
                 type="file"
                 class="sr-only"
-                accept="image/png,image/jpeg,image/webp"
+                accept="image/png,image/jpeg"
                 :disabled="logoUploading"
                 @change="handleLogoUpload"
               />

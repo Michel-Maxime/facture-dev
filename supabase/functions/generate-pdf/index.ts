@@ -40,7 +40,6 @@ async function buildInvoicePdf(invoice: any, lines: any[], client: any, profile:
   const marginR = width - 50;
 
   // ── LOGO (optional) ───────────────────────────────────────────────────
-  let headerTextX = marginL;
   if (profile.logo_url) {
     try {
       const { data: logoData } = await supabase.storage
@@ -58,15 +57,14 @@ async function buildInvoicePdf(invoice: any, lines: any[], client: any, profile:
           logoImage = await pdfDoc.embedJpg(logoBytes);
         }
 
-        const dims = logoImage.scaleToFit(120, 50);
+        const dims = logoImage.scaleToFit(80, 35);
         page.drawImage(logoImage, {
           x: marginL,
-          y: y - dims.height + 18,
+          y: y - dims.height,
           width: dims.width,
           height: dims.height,
         });
-
-        headerTextX = marginL + dims.width + 12;
+        y -= dims.height + 8; // reserve space below logo before header text
       }
     } catch {
       // Logo fetch failed — continue without it
@@ -75,7 +73,7 @@ async function buildInvoicePdf(invoice: any, lines: any[], client: any, profile:
 
   // ── HEADER ────────────────────────────────────────────────────────────
   page.drawText(`${profile.first_name} ${profile.last_name}`, {
-    x: headerTextX, y, font: fontBold, size: 18, color: purple,
+    x: marginL, y, font: fontBold, size: 18, color: purple,
   });
   page.drawText('FACTURE', {
     x: marginR - 120, y, font: fontBold, size: 22, color: black,
@@ -162,9 +160,9 @@ async function buildInvoicePdf(invoice: any, lines: any[], client: any, profile:
     page.drawText(formatCurrency(invoice.vat_amount), { x: marginR - 60, y, font: fontRegular, size: 9, color: black });
   }
 
+  y -= 14;
+  page.drawLine({ start: { x: totalsX, y }, end: { x: marginR, y }, thickness: 1, color: purple });
   y -= 16;
-  page.drawLine({ start: { x: totalsX, y: y + 2 }, end: { x: marginR, y: y + 2 }, thickness: 1, color: purple });
-  y -= 4;
   page.drawText('Total TTC', { x: totalsX, y, font: fontBold, size: 11, color: purple });
   page.drawText(formatCurrency(invoice.total), { x: marginR - 70, y, font: fontBold, size: 11, color: purple });
 

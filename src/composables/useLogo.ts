@@ -4,7 +4,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useNotificationsStore } from '@/stores/notifications'
 
 const MAX_SIZE_BYTES = 512 * 1024 // 512 KB
-const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/webp']
+const ALLOWED_TYPES = ['image/png', 'image/jpeg']
 
 export function useLogo() {
   const authStore = useAuthStore()
@@ -24,7 +24,7 @@ export function useLogo() {
     if (!authStore.user) return false
 
     if (!ALLOWED_TYPES.includes(file.type)) {
-      notifications.error('Format non supporté', 'PNG, JPEG ou WebP uniquement')
+      notifications.error('Format non supporté', 'PNG ou JPEG uniquement')
       return false
     }
     if (file.size > MAX_SIZE_BYTES) {
@@ -34,7 +34,7 @@ export function useLogo() {
 
     uploading.value = true
 
-    const ext = file.type === 'image/png' ? 'png' : file.type === 'image/webp' ? 'webp' : 'jpg'
+    const ext = file.type === 'image/png' ? 'png' : 'jpg'
     const storagePath = `${authStore.user.id}/logo.${ext}`
 
     const { error: uploadError } = await supabase.storage
@@ -50,6 +50,7 @@ export function useLogo() {
     // Save path in profile
     const { data: updated, error: updateError } = await supabase
       .from('profiles')
+      // @ts-ignore — logo_url is in the schema but type inference breaks on optional columns
       .update({ logo_url: storagePath, updated_at: new Date().toISOString() })
       .eq('id', authStore.user.id)
       .select()
@@ -82,6 +83,7 @@ export function useLogo() {
 
     const { data: updated, error: updateError } = await supabase
       .from('profiles')
+      // @ts-ignore — logo_url is in the schema but type inference breaks on optional columns
       .update({ logo_url: null, updated_at: new Date().toISOString() })
       .eq('id', authStore.user.id)
       .select()
