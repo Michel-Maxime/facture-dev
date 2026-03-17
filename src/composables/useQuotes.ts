@@ -245,9 +245,9 @@ export function useQuotes() {
         payment_term_days: 30,
         payment_method: 'Virement bancaire',
         subtotal: quote.subtotal,
-        vat_rate: 0,
-        vat_amount: 0,
-        total: quote.subtotal,
+        vat_rate: authStore.profile?.vat_regime === 'SUBJECT' ? 0.20 : 0,
+        vat_amount: authStore.profile?.vat_regime === 'SUBJECT' ? quote.subtotal * 0.20 : 0,
+        total: authStore.profile?.vat_regime === 'SUBJECT' ? quote.subtotal * 1.20 : quote.subtotal,
         notes: quote.notes || null,
         status: 'DRAFT',
       })
