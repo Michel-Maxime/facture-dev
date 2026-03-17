@@ -65,6 +65,11 @@ async function buildInvoicePdf(invoice: any, lines: any[], client: any, profile:
   page.drawText(`${profile.postal_code} ${profile.city}`, { x: marginL, y, font: fontRegular, size: 9, color: gray });
   page.drawText(`Échéance : ${formatDate(invoice.due_date)}`, { x: marginR - 180, y, font: fontRegular, size: 9, color: gray });
 
+  if (profile.code_ape) {
+    y -= 12;
+    page.drawText(`Code APE : ${profile.code_ape}`, { x: marginL, y, font: fontRegular, size: 9, color: gray });
+  }
+
   // ── SEPARATOR ─────────────────────────────────────────────────────────
   y -= 20;
   page.drawLine({ start: { x: marginL, y }, end: { x: marginR, y }, thickness: 0.5, color: lightGray });
@@ -159,7 +164,7 @@ async function buildInvoicePdf(invoice: any, lines: any[], client: any, profile:
     });
     y -= 11;
   }
-  page.drawText("En cas de retard de paiement, application d'une pénalité égale à 3 fois le taux d'intérêt légal.", {
+  page.drawText("Pénalités de retard : 3 fois le taux d'intérêt légal", {
     x: marginL, y, font: fontRegular, size: mentionSize, color: mentionColor,
   });
   y -= 11;
