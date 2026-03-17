@@ -1,5 +1,7 @@
 # Phase 10 — Unification PDF et logo Implementation Plan
 
+> ✅ **COMPLÉTÉE** — 2026-03-17 · commit `3673d16`
+
 > **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Avoir une seule source de vérité pour le contenu des PDFs de facture, et permettre à l'utilisateur d'uploader un logo qui apparaît sur toutes ses factures.
