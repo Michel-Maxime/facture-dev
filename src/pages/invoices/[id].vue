@@ -7,6 +7,7 @@ import { usePdf } from '@/composables/usePdf'
 import { useClients } from '@/composables/useClients'
 import { useCreditNotes } from '@/composables/useCreditNotes'
 import { useAuthStore } from '@/stores/auth'
+import { useNotificationsStore } from '@/stores/notifications'
 import { formatCurrency, formatDate } from '@/utils/formatters'
 import type { Invoice, InvoiceLine, Client, Payment } from '@/lib/types'
 import type { PdfInvoiceData } from '@/utils/pdf-template'
@@ -37,8 +38,24 @@ const emitting = ref(false)
 const duplicating = ref(false)
 const creatingCreditNote = ref(false)
 
-async function handleEmitInvoice() {
+// ── Emit confirmation modal ──────────────────────────────────────────
+const showEmitConfirmModal = ref(false)
+const notifications = useNotificationsStore()
+
+function requestEmit() {
+  if (!authStore.isProfileComplete) {
+    notifications.error(
+      'Profil incomplet',
+      'Complétez votre profil (SIRET, adresse) avant d\'émettre une facture.'
+    )
+    return
+  }
+  showEmitConfirmModal.value = true
+}
+
+async function confirmEmit() {
   if (!invoice.value) return
+  showEmitConfirmModal.value = false
   emitting.value = true
   const result = await emitInvoice(invoice.value.id)
   emitting.value = false
@@ -193,7 +210,7 @@ onMounted(load)
             variant="default"
             size="md"
             :loading="emitting"
-            @click="handleEmitInvoice"
+            @click="requestEmit"
           >
             <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
               <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
@@ -389,6 +406,45 @@ onMounted(load)
         </template>
       </Card>
     </template>
+
+    <!-- Emit confirmation modal -->
+    <Modal
+      v-model="showEmitConfirmModal"
+      title="Émettre la facture ?"
+      description="Cette action est irréversible. Un numéro sera attribué et la facture ne pourra plus être modifiée."
+      size="sm"
+    >
+      <div v-if="invoice" class="space-y-3">
+        <div class="rounded-lg bg-[#F9FAFB] border border-[#E5E7EB] p-4 space-y-2 text-sm">
+          <div class="flex justify-between">
+            <span class="text-[#6B7280]">Client</span>
+            <span class="font-medium text-[#111827]">{{ client?.name ?? '—' }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-[#6B7280]">Montant TTC</span>
+            <span class="font-mono font-bold text-[#7C3AED]">{{ formatCurrency(invoice.total) }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-[#6B7280]">Lignes</span>
+            <span class="font-medium text-[#111827]">{{ lines.length }} prestation(s)</span>
+          </div>
+        </div>
+        <div class="flex items-start gap-2 rounded-lg bg-[#FEF3C7] border border-[#FDE68A] px-3 py-2.5">
+          <svg class="h-4 w-4 shrink-0 text-[#D97706] mt-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+          </svg>
+          <p class="text-xs text-[#92400E]">
+            Une fois émise, la facture sera <strong>définitivement verrouillée</strong>. Elle ne peut plus être modifiée ni supprimée.
+          </p>
+        </div>
+      </div>
+      <template #footer>
+        <Button variant="ghost" @click="showEmitConfirmModal = false">Annuler</Button>
+        <Button variant="default" :loading="emitting" @click="confirmEmit">
+          Confirmer l'émission
+        </Button>
+      </template>
+    </Modal>
 
     <!-- Payment modal -->
     <Modal
