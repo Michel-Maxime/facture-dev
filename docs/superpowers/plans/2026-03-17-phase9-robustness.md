@@ -1,5 +1,7 @@
 # Phase 9 — Robustesse et garde-fous Implementation Plan
 
+> ✅ **COMPLÉTÉE** — 2026-03-17 · 5 commits · 187 tests verts
+
 > **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Ajouter les garde-fous manquants avant l'émission (confirmation, validation profil, fix ACRE, fix convertToInvoice) pour qu'aucun utilisateur ne puisse émettre une facture non conforme par accident.

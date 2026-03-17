@@ -553,6 +553,27 @@ SELECT cron.schedule(
 
 ---
 
+## Tâche finale : Marquer la phase comme complétée
+
+Quand tous les critères de succès sont verts et tous les tests passent :
+
+- [ ] **Step 1 : Mettre à jour l'indicateur de complétion dans ce fichier**
+
+```bash
+DATE=$(date +%Y-%m-%d)
+COMMIT=$(git rev-parse --short HEAD)
+sed -i '' "2s|^|\n> ✅ **COMPLÉTÉE** — ${DATE} · commit \`${COMMIT}\`\n|" docs/superpowers/plans/2026-03-17-phase12-facturx.md
+```
+
+- [ ] **Step 2 : Commit de l'indicateur**
+
+```bash
+git add docs/superpowers/plans/2026-03-17-phase12-facturx.md
+git commit -m "chore: mark Phase 12 as complete"
+```
+
+---
+
 ## Critères de succès
 
 - [ ] `buildFacturxXml` passe ses 9 tests unitaires (namespace, ID, date, vendeur, acheteur, total, TypeCode 380, profil MINIMUM, échappement XML)

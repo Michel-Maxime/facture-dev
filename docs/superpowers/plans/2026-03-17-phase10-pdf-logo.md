@@ -845,6 +845,29 @@ git commit -m "feat: embed user logo in generated PDFs"
 
 ---
 
+## Tâche finale : Marquer la phase comme complétée
+
+Quand tous les critères de succès sont verts et tous les tests passent :
+
+- [ ] **Step 1 : Mettre à jour l'indicateur de complétion dans ce fichier**
+
+```bash
+# Récupérer la date du jour et le dernier commit
+DATE=$(date +%Y-%m-%d)
+COMMIT=$(git rev-parse --short HEAD)
+# Insérer l'indicateur après la ligne du titre (ligne 1)
+sed -i '' "2s|^|\n> ✅ **COMPLÉTÉE** — ${DATE} · commit \`${COMMIT}\`\n|" docs/superpowers/plans/2026-03-17-phase10-pdf-logo.md
+```
+
+- [ ] **Step 2 : Commit de l'indicateur**
+
+```bash
+git add docs/superpowers/plans/2026-03-17-phase10-pdf-logo.md
+git commit -m "chore: mark Phase 10 as complete"
+```
+
+---
+
 ## Critères de succès
 
 - [ ] Mentions légales identiques entre template HTML et Edge Function `generate-pdf`

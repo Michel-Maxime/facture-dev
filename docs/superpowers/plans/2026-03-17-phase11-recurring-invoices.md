@@ -1057,6 +1057,27 @@ git commit -m "feat: add recurring invoices to sidebar navigation"
 
 ---
 
+## Tâche finale : Marquer la phase comme complétée
+
+Quand tous les critères de succès sont verts et tous les tests passent :
+
+- [ ] **Step 1 : Mettre à jour l'indicateur de complétion dans ce fichier**
+
+```bash
+DATE=$(date +%Y-%m-%d)
+COMMIT=$(git rev-parse --short HEAD)
+sed -i '' "2s|^|\n> ✅ **COMPLÉTÉE** — ${DATE} · commit \`${COMMIT}\`\n|" docs/superpowers/plans/2026-03-17-phase11-recurring-invoices.md
+```
+
+- [ ] **Step 2 : Commit de l'indicateur**
+
+```bash
+git add docs/superpowers/plans/2026-03-17-phase11-recurring-invoices.md
+git commit -m "chore: mark Phase 11 as complete"
+```
+
+---
+
 ## Critères de succès
 
 - [ ] `recurring_schedules` table existe avec RLS (seul l'utilisateur peut CRUD ses propres schedules)
