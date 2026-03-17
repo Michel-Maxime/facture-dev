@@ -12,6 +12,19 @@ export const useAuthStore = defineStore('auth', () => {
 
   const isAuthenticated = computed(() => !!user.value)
 
+  const isProfileComplete = computed(() => {
+    const p = profile.value
+    if (!p) return false
+    return !!(
+      p.first_name?.trim() &&
+      p.last_name?.trim() &&
+      p.siret?.trim() &&
+      p.address?.trim() &&
+      p.city?.trim() &&
+      p.postal_code?.trim()
+    )
+  })
+
   async function initialize() {
     loading.value = true
     const { data } = await supabase.auth.getSession()
@@ -49,5 +62,5 @@ export const useAuthStore = defineStore('auth', () => {
     profile.value = p
   }
 
-  return { user, session, profile, loading, isAuthenticated, initialize, fetchProfile, setProfile }
+  return { user, session, profile, loading, isAuthenticated, isProfileComplete, initialize, fetchProfile, setProfile }
 })
