@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import { useForm } from 'vee-validate'
 import { toTypedSchema } from '@vee-validate/zod'
 import { profileSchema } from '@/utils/validators'
@@ -7,6 +7,7 @@ import type { ProfileFormData } from '@/utils/validators'
 import { useAuthStore } from '@/stores/auth'
 import { useNotificationsStore } from '@/stores/notifications'
 import { supabase } from '@/lib/supabase'
+import { useLogo } from '@/composables/useLogo'
 import Input from '@/components/ui/Input.vue'
 import Select from '@/components/ui/Select.vue'
 import Button from '@/components/ui/Button.vue'
@@ -14,6 +15,31 @@ import Card from '@/components/ui/Card.vue'
 
 const authStore = useAuthStore()
 const notifications = useNotificationsStore()
+const { uploading: logoUploading, logoUrl, uploadLogo, removeLogo, getLogoSignedUrl } = useLogo()
+
+const logoSignedUrl = ref<string | null>(null)
+
+onMounted(async () => {
+  if (logoUrl.value) {
+    logoSignedUrl.value = await getLogoSignedUrl(logoUrl.value)
+  }
+})
+
+async function handleLogoUpload(event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file) return
+  const success = await uploadLogo(file)
+  if (success && logoUrl.value) {
+    logoSignedUrl.value = await getLogoSignedUrl(logoUrl.value)
+  }
+  input.value = ''
+}
+
+async function handleRemoveLogo() {
+  await removeLogo()
+  logoSignedUrl.value = null
+}
 
 const saving = ref(false)
 const saveSuccess = ref(false)
@@ -150,6 +176,52 @@ const onSubmit = handleSubmit(async (values) => {
               :error="errors.last_name"
               required
             />
+          </div>
+        </div>
+      </Card>
+
+      <!-- Logo section -->
+      <Card title="Logo" description="Apparaît en haut de vos factures (PNG, JPEG · max 512 Ko)" class="mb-4">
+        <div class="flex items-center gap-4">
+          <!-- Preview -->
+          <div class="w-24 h-14 rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] flex items-center justify-center overflow-hidden shrink-0">
+            <img
+              v-if="logoSignedUrl"
+              :src="logoSignedUrl"
+              alt="Logo"
+              class="max-w-full max-h-full object-contain"
+            />
+            <svg v-else class="w-8 h-8 text-[#D1D5DB]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          </div>
+
+          <!-- Actions -->
+          <div class="flex flex-col gap-2">
+            <label
+              class="inline-flex items-center gap-2 cursor-pointer rounded-md border border-[#E5E7EB] bg-white px-3 py-1.5 text-sm font-medium text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+              :class="{ 'opacity-50 cursor-not-allowed': logoUploading }"
+            >
+              <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+              </svg>
+              {{ logoUploading ? 'Envoi...' : (logoUrl ? 'Remplacer' : 'Uploader un logo') }}
+              <input
+                type="file"
+                class="sr-only"
+                accept="image/png,image/jpeg,image/webp"
+                :disabled="logoUploading"
+                @change="handleLogoUpload"
+              />
+            </label>
+            <button
+              v-if="logoUrl"
+              type="button"
+              class="text-xs text-[#DC2626] hover:underline text-left"
+              @click="handleRemoveLogo"
+            >
+              Supprimer le logo
+            </button>
           </div>
         </div>
       </Card>
