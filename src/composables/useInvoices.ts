@@ -6,6 +6,9 @@ import { useAuditLog } from '@/composables/useAuditLog'
 import type { Invoice, InvoiceLine } from '@/lib/types'
 import type { InvoiceFormData } from '@/utils/validators'
 
+// Module-level flag: only call mark_overdue_invoices once per browser session
+let overdueMarkedThisSession = false
+
 export function useInvoices() {
   const authStore = useAuthStore()
   const notifications = useNotificationsStore()
@@ -20,11 +23,14 @@ export function useInvoices() {
     loading.value = true
     error.value = null
 
-    // Trigger overdue detection before fetching (scoped to current user)
-    try {
-      await supabase.rpc('mark_overdue_invoices', { p_user_id: authStore.user.id })
-    } catch {
-      // Non-critical — continue even if this fails
+    // Trigger overdue detection once per session (scoped to current user)
+    if (!overdueMarkedThisSession) {
+      try {
+        await supabase.rpc('mark_overdue_invoices', { p_user_id: authStore.user.id })
+        overdueMarkedThisSession = true
+      } catch {
+        // Non-critical — continue even if this fails
+      }
     }
 
     const { data, error: err } = await supabase
