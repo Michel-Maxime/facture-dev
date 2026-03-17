@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, watch } from 'vue'
 
 export const useUiStore = defineStore('ui', () => {
-  const sidebarOpen = ref(true)
+  const sidebarOpen = ref(typeof window !== 'undefined' ? window.innerWidth >= 1024 : true)
 
   const storedTheme = typeof localStorage !== 'undefined'
     ? (localStorage.getItem('theme') as 'light' | 'dark' | null)

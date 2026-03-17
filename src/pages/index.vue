@@ -7,6 +7,7 @@ import { useThresholds } from '@/composables/useThresholds'
 import { useCotisations } from '@/composables/useCotisations'
 import { useAuthStore } from '@/stores/auth'
 import { formatCurrency, formatDate, formatPercentage } from '@/utils/formatters'
+import { THRESHOLDS } from '@/lib/constants'
 import Card from '@/components/ui/Card.vue'
 import Gauge from '@/components/ui/Gauge.vue'
 import InvoiceStatusBadge from '@/components/invoices/InvoiceStatusBadge.vue'
@@ -81,6 +82,23 @@ onMounted(async () => {
       <p class="text-sm text-[#6B7280] mt-0.5">
         Bonjour {{ authStore.profile?.first_name }} — voici votre activité du moment.
       </p>
+    </div>
+
+    <!-- Bank account alert -->
+    <div
+      v-if="caEncaisse >= THRESHOLDS.dedicatedBankAccount"
+      class="flex items-start gap-3 bg-[#FEF3C7] border border-[#FDE68A] rounded-xl px-4 py-3"
+      role="alert"
+    >
+      <svg class="h-5 w-5 text-[#D97706] shrink-0 mt-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+      </svg>
+      <div>
+        <p class="text-sm font-semibold text-[#92400E]">Compte bancaire dédié requis</p>
+        <p class="text-xs text-[#92400E] mt-0.5">
+          Votre CA dépasse {{ formatCurrency(THRESHOLDS.dedicatedBankAccount) }} — vous devez ouvrir un compte bancaire dédié à votre activité professionnelle.
+        </p>
+      </div>
     </div>
 
     <!-- Metric cards -->
@@ -195,6 +213,31 @@ onMounted(async () => {
         </div>
       </Card>
     </div>
+
+    <!-- Declaration helper -->
+    <Card title="Prochaine déclaration Urssaf">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="text-center sm:text-left">
+          <p class="text-xs text-[#6B7280] uppercase tracking-wide font-medium">CA de la période</p>
+          <p class="mt-1 text-lg font-bold font-mono tabular-nums text-[#111827]">
+            {{ formatCurrency(cotisations.caPerPeriod.value) }}
+          </p>
+        </div>
+        <div class="text-center sm:text-left">
+          <p class="text-xs text-[#6B7280] uppercase tracking-wide font-medium">Cotisations estimées</p>
+          <p class="mt-1 text-lg font-bold font-mono tabular-nums text-[#DC2626]">
+            {{ formatCurrency(cotisations.cotisationsPerPeriod.value) }}
+          </p>
+        </div>
+        <div class="text-center sm:text-left">
+          <p class="text-xs text-[#6B7280] uppercase tracking-wide font-medium">Prochaine échéance</p>
+          <p class="mt-1 text-base font-semibold text-[#7C3AED]">
+            {{ cotisations.nextDeadline.value }}
+          </p>
+          <p class="text-xs text-[#9CA3AF] font-mono tabular-nums">J-{{ cotisations.daysUntilDeadline.value }}</p>
+        </div>
+      </div>
+    </Card>
 
     <!-- Recent invoices -->
     <Card title="Factures récentes" description="Les 5 dernières factures émises">

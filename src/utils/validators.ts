@@ -42,6 +42,7 @@ export const profileSchema = z.object({
   vat_regime: z.enum(['FRANCHISE', 'SUBJECT']),
   declaration_freq: z.enum(['MONTHLY', 'QUARTERLY']),
   cotisation_rate: z.number().min(0).max(1),
+  is_acre: z.boolean().default(false),
 })
 
 export type ProfileFormData = z.infer<typeof profileSchema>

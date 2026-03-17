@@ -5,9 +5,19 @@ import { useAuthStore } from '@/stores/auth'
 export function useCotisations(revenue: { value: number }) {
   const authStore = useAuthStore()
 
-  const rate = computed(
-    () => authStore.profile?.cotisation_rate ?? COTISATION_RATES_2026.BNC_SSI,
-  )
+  // ACRE: halve cotisation rate if enabled and still in first year of activity
+  const isFirstYear = computed(() => {
+    const created = authStore.profile?.company_created_at
+    if (!created) return false
+    const ms = Date.now() - new Date(created).getTime()
+    return ms < 365.25 * 24 * 60 * 60 * 1000
+  })
+
+  const rate = computed(() => {
+    const base = authStore.profile?.cotisation_rate ?? COTISATION_RATES_2026.BNC_SSI
+    if (authStore.profile?.is_acre && isFirstYear.value) return base / 2
+    return base
+  })
 
   const cotisations = computed(() => revenue.value * rate.value)
 

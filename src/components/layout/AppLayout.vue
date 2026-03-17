@@ -1,10 +1,27 @@
 <script setup lang="ts">
+import { watch } from 'vue'
+import { useRoute } from 'vue-router'
+import { useMediaQuery } from '@vueuse/core'
 import { useUiStore } from '@/stores/ui'
 import AppSidebar from './AppSidebar.vue'
 import AppHeader from './AppHeader.vue'
 import { RouterView } from 'vue-router'
 
 const uiStore = useUiStore()
+const route = useRoute()
+const isDesktop = useMediaQuery('(min-width: 1024px)')
+
+// On desktop: always show sidebar; sync store when crossing breakpoint
+watch(isDesktop, (desktop) => {
+  uiStore.sidebarOpen = desktop
+}, { immediate: false })
+
+// Auto-close sidebar on navigation on mobile
+watch(route, () => {
+  if (!isDesktop.value) {
+    uiStore.sidebarOpen = false
+  }
+})
 </script>
 
 <template>
@@ -36,7 +53,7 @@ const uiStore = useUiStore()
       leave-to-class="-translate-x-full"
     >
       <div
-        v-show="uiStore.sidebarOpen"
+        v-show="uiStore.sidebarOpen || isDesktop"
         class="fixed inset-y-0 left-0 z-30 lg:static lg:z-auto lg:flex"
       >
         <AppSidebar />

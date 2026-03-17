@@ -96,9 +96,19 @@ const tabs: { key: QuoteStatus | 'ALL'; label: string }[] = [
   { key: 'EXPIRED', label: 'Expirés' },
 ]
 
+const search = ref('')
+
 const filteredQuotes = computed(() => {
-  if (activeTab.value === 'ALL') return quotes.value
-  return quotes.value.filter((q) => q.status === activeTab.value)
+  let result = activeTab.value === 'ALL' ? quotes.value : quotes.value.filter((q) => q.status === activeTab.value)
+  if (search.value.trim()) {
+    const q = search.value.trim().toLowerCase()
+    result = result.filter(
+      (quote) =>
+        quote.number?.toLowerCase().includes(q) ||
+        clientMap.value.get(quote.client_id)?.toLowerCase().includes(q),
+    )
+  }
+  return result
 })
 
 // ─── Client name lookup ───────────────────────────────────────────────────────
@@ -162,6 +172,19 @@ onMounted(async () => {
         </svg>
         Nouveau devis
       </Button>
+    </div>
+
+    <!-- Search -->
+    <div class="relative max-w-xs">
+      <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#9CA3AF]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+        <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+      </svg>
+      <input
+        v-model="search"
+        type="search"
+        placeholder="Rechercher un devis…"
+        class="w-full h-9 pl-9 pr-3 rounded-md border border-[#E5E7EB] bg-white text-sm text-[#111827] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#7C3AED] focus:border-[#7C3AED]"
+      />
     </div>
 
     <!-- Tabs -->

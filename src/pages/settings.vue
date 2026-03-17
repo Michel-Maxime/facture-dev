@@ -49,6 +49,7 @@ function buildInitialValues(): ProfileFormData {
     vat_regime: p?.vat_regime ?? 'FRANCHISE',
     declaration_freq: p?.declaration_freq ?? 'QUARTERLY',
     cotisation_rate: p?.cotisation_rate ?? 0.256,
+    is_acre: p?.is_acre ?? false,
   }
 }
 
@@ -73,6 +74,7 @@ const [companyCreatedAt, companyCreatedAtAttrs] = defineField('company_created_a
 const [vatRegime, vatRegimeAttrs] = defineField('vat_regime')
 const [declarationFreq, declarationFreqAttrs] = defineField('declaration_freq')
 const [cotisationRate, cotisationRateAttrs] = defineField('cotisation_rate')
+const [isAcre, isAcreAttrs] = defineField('is_acre')
 
 const onSubmit = handleSubmit(async (values) => {
   if (!authStore.user) return
@@ -95,6 +97,7 @@ const onSubmit = handleSubmit(async (values) => {
       vat_regime: values.vat_regime,
       declaration_freq: values.declaration_freq,
       cotisation_rate: values.cotisation_rate,
+      is_acre: values.is_acre,
       updated_at: new Date().toISOString(),
     })
     .eq('id', authStore.user.id)
@@ -280,6 +283,34 @@ const onSubmit = handleSubmit(async (values) => {
               BNC SSI : 25,6 % · BNC CIPAV : 23,2 %
             </p>
             <p v-if="errors.cotisation_rate" class="text-xs text-[#DC2626]">{{ errors.cotisation_rate }}</p>
+          </div>
+
+          <!-- ACRE toggle -->
+          <div class="flex items-center justify-between gap-4 pt-1">
+            <div>
+              <p class="text-sm font-medium text-[#374151]">Bénéficiaire ACRE</p>
+              <p class="text-xs text-[#6B7280] mt-0.5">
+                Réduit les cotisations de 50 % la première année d'activité
+              </p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              :aria-checked="isAcre"
+              v-bind="isAcreAttrs"
+              :class="[
+                'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#7C3AED] focus:ring-offset-2',
+                isAcre ? 'bg-[#7C3AED]' : 'bg-[#D1D5DB]',
+              ]"
+              @click="isAcre = !isAcre"
+            >
+              <span
+                :class="[
+                  'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
+                  isAcre ? 'translate-x-5' : 'translate-x-0',
+                ]"
+              />
+            </button>
           </div>
         </div>
       </Card>

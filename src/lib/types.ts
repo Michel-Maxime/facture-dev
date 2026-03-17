@@ -29,6 +29,7 @@ export type Database = {
           declaration_freq: 'MONTHLY' | 'QUARTERLY'
           cotisation_rate: number
           logo_url: string | null
+          is_acre: boolean
           created_at: string
           updated_at: string
         }
@@ -48,6 +49,7 @@ export type Database = {
           declaration_freq?: 'MONTHLY' | 'QUARTERLY'
           cotisation_rate?: number
           logo_url?: string | null
+          is_acre?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -67,6 +69,7 @@ export type Database = {
           declaration_freq?: 'MONTHLY' | 'QUARTERLY'
           cotisation_rate?: number
           logo_url?: string | null
+          is_acre?: boolean
           updated_at?: string
         }
       }
