@@ -1,6 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { PDFDocument, rgb, StandardFonts } from "npm:pdf-lib@1.17.1";
+import { buildFacturxXml } from "../_shared/facturx.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -22,7 +23,7 @@ function formatDate(dateStr: string): string {
   return new Intl.DateTimeFormat('fr-FR').format(new Date(dateStr));
 }
 
-async function buildInvoicePdf(invoice: any, lines: any[], client: any, profile: any, supabase: any): Promise<Uint8Array> {
+async function buildInvoicePdf(invoice: any, lines: any[], client: any, profile: any, supabase: any, facturxEnabled: boolean = false): Promise<Uint8Array> {
   const pdfDoc = await PDFDocument.create();
   const page = pdfDoc.addPage([595, 842]); // A4
   const { width, height } = page.getSize();
@@ -209,6 +210,32 @@ async function buildInvoicePdf(invoice: any, lines: any[], client: any, profile:
     page.drawText(invoice.notes.slice(0, 120), { x: marginL, y, font: fontRegular, size: 8, color: gray });
   }
 
+  // ── FACTUR-X XML ATTACHMENT (if enabled) ──────────────────────────
+  if (facturxEnabled && invoice.number) {
+    const xmlContent = buildFacturxXml({
+      invoiceNumber: invoice.number,
+      issueDate: invoice.issue_date,
+      seller: {
+        name: `${profile.first_name} ${profile.last_name}`,
+        siret: profile.siret ?? '',
+      },
+      buyer: {
+        name: client.name,
+      },
+      totalTTC: invoice.total,
+      currency: 'EUR',
+    });
+
+    const xmlBytes = new TextEncoder().encode(xmlContent);
+
+    await pdfDoc.attach(xmlBytes, 'factur-x.xml', {
+      mimeType: 'application/xml',
+      description: 'Factur-X MINIMUM — Facture électronique',
+      creationDate: new Date(invoice.issue_date),
+      modificationDate: new Date(invoice.issue_date),
+    });
+  }
+
   return pdfDoc.save();
 }
 
@@ -248,7 +275,8 @@ Deno.serve(async (req: Request) => {
   if (!client) return json({ error: 'Client not found' }, 404);
   if (!invoice.number) return json({ error: 'Invoice has no number — emit it first' }, 422);
 
-  const pdfBytes = await buildInvoicePdf(invoice, lines, client, profile, supabase);
+  const facturxEnabled = profile.facturx_enabled ?? true;
+  const pdfBytes = await buildInvoicePdf(invoice, lines, client, profile, supabase, facturxEnabled);
 
   const storagePath = `${user.id}/${invoice.number}.pdf`;
   const { error: uploadError } = await supabase.storage

@@ -43,6 +43,7 @@ export const profileSchema = z.object({
   declaration_freq: z.enum(['MONTHLY', 'QUARTERLY']),
   cotisation_rate: z.number().min(0).max(1),
   is_acre: z.boolean().default(false),
+  facturx_enabled: z.boolean().default(true),
 })
 
 export type ProfileFormData = z.infer<typeof profileSchema>

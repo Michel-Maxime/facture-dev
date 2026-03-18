@@ -1,6 +1,10 @@
 # Phase 12 — Préparation Factur-X Implementation Plan
 
+> ✅ **COMPLÉTÉE** — 2026-03-18 · 202 tests verts · generate-pdf v4 déployé
+
 > **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
+>
+> ⚠️ **INTERDICTION DE COMMIT** — Ne jamais exécuter `git commit`. Seul l'utilisateur a le droit de committer. Préparer le code, mais s'arrêter avant le commit.
 
 **Goal:** Générer des factures conformes au profil Factur-X MINIMUM (PDF/A-3 avec XML Cross-Industry Invoice embarqué), pour anticiper l'obligation de facturation électronique française (réception obligatoire sept. 2026, émission 2027).
 

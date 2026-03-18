@@ -36,6 +36,7 @@ const client = ref<Client | null>(null)
 const emitting = ref(false)
 const duplicating = ref(false)
 const creatingCreditNote = ref(false)
+const downloadingPdf = ref(false)
 
 // ── Emit confirmation modal ──────────────────────────────────────────
 const showEmitConfirmModal = ref(false)
@@ -136,14 +137,17 @@ async function handleRecordPayment() {
 }
 
 async function handleDownloadPdf() {
-  if (!invoice.value) return
-  // Use stored PDF if available (emitted invoices), otherwise use preview-pdf Edge Function
-  if (invoice.value.pdf_url && invoice.value.number) {
-    await downloadStoredPdf(invoice.value.pdf_url, invoice.value.number)
-    return
+  if (!invoice.value || downloadingPdf.value) return
+  downloadingPdf.value = true
+  try {
+    if (invoice.value.pdf_url && invoice.value.number) {
+      await downloadStoredPdf(invoice.value.pdf_url, invoice.value.number)
+    } else {
+      await downloadDraftPdf(invoice.value.id, `brouillon-${invoice.value.id.slice(0, 8)}`)
+    }
+  } finally {
+    downloadingPdf.value = false
   }
-  // For drafts: use preview-pdf Edge Function
-  await downloadDraftPdf(invoice.value.id, `brouillon-${invoice.value.id.slice(0, 8)}`)
 }
 
 const subtotal = computed(() => lines.value.reduce((sum, l) => sum + l.amount, 0))
@@ -192,6 +196,13 @@ onMounted(load)
               {{ invoice.number ?? 'Brouillon' }}
             </h1>
             <InvoiceStatusBadge :status="invoice.status" />
+            <span
+              v-if="invoice.pdf_url && authStore.profile?.facturx_enabled"
+              class="inline-flex items-center gap-1 rounded-md bg-[#EDE9FE] px-2 py-0.5 text-xs font-semibold text-[#7C3AED]"
+              title="Cette facture contient un XML Factur-X MINIMUM embarqué"
+            >
+              FX
+            </span>
           </div>
           <p class="text-sm text-[#6B7280] mt-1">
             Émise le {{ formatDate(invoice.issue_date) }} · Échéance le {{ formatDate(invoice.due_date) }}
@@ -257,11 +268,11 @@ onMounted(load)
             </svg>
             Dupliquer
           </Button>
-          <Button variant="outline" size="md" @click="handleDownloadPdf">
+          <Button variant="outline" size="md" :disabled="downloadingPdf" @click="handleDownloadPdf">
             <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
               <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z" clip-rule="evenodd" />
             </svg>
-            Télécharger PDF
+            {{ downloadingPdf ? 'Téléchargement…' : 'Télécharger PDF' }}
           </Button>
         </div>
       </div>

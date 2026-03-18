@@ -76,6 +76,7 @@ function buildInitialValues(): ProfileFormData {
     declaration_freq: p?.declaration_freq ?? 'QUARTERLY',
     cotisation_rate: p?.cotisation_rate ?? 0.256,
     is_acre: p?.is_acre ?? false,
+    facturx_enabled: p?.facturx_enabled ?? true,
   }
 }
 
@@ -101,6 +102,7 @@ const [vatRegime, vatRegimeAttrs] = defineField('vat_regime')
 const [declarationFreq, declarationFreqAttrs] = defineField('declaration_freq')
 const [cotisationRate, cotisationRateAttrs] = defineField('cotisation_rate')
 const [isAcre, isAcreAttrs] = defineField('is_acre')
+const [facturxEnabled, facturxEnabledAttrs] = defineField('facturx_enabled')
 
 const onSubmit = handleSubmit(async (values) => {
   if (!authStore.user) return
@@ -124,6 +126,7 @@ const onSubmit = handleSubmit(async (values) => {
       declaration_freq: values.declaration_freq,
       cotisation_rate: values.cotisation_rate,
       is_acre: values.is_acre,
+      facturx_enabled: values.facturx_enabled,
       updated_at: new Date().toISOString(),
     })
     .eq('id', authStore.user.id)
@@ -380,6 +383,34 @@ const onSubmit = handleSubmit(async (values) => {
                 :class="[
                   'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
                   isAcre ? 'translate-x-5' : 'translate-x-0',
+                ]"
+              />
+            </button>
+          </div>
+
+          <!-- Factur-X toggle -->
+          <div class="flex items-center justify-between gap-4 pt-1 border-t border-[#F3F4F6] mt-2">
+            <div>
+              <p class="text-sm font-medium text-[#374151]">Factur-X (facturation électronique)</p>
+              <p class="text-xs text-[#6B7280] mt-0.5">
+                Embarque un XML Factur-X MINIMUM dans vos PDFs. Requis pour l'obligation légale de 2026/2027.
+              </p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              :aria-checked="facturxEnabled"
+              v-bind="facturxEnabledAttrs"
+              :class="[
+                'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#7C3AED] focus:ring-offset-2',
+                facturxEnabled ? 'bg-[#7C3AED]' : 'bg-[#D1D5DB]',
+              ]"
+              @click="facturxEnabled = !facturxEnabled"
+            >
+              <span
+                :class="[
+                  'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
+                  facturxEnabled ? 'translate-x-5' : 'translate-x-0',
                 ]"
               />
             </button>

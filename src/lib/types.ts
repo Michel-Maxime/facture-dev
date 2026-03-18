@@ -434,6 +434,7 @@ export type Database = {
           cotisation_rate: number | null
           created_at: string | null
           declaration_freq: Database["public"]["Enums"]["frequency"] | null
+          facturx_enabled: boolean
           first_name: string
           iban: string | null
           id: string
@@ -454,6 +455,7 @@ export type Database = {
           cotisation_rate?: number | null
           created_at?: string | null
           declaration_freq?: Database["public"]["Enums"]["frequency"] | null
+          facturx_enabled?: boolean
           first_name: string
           iban?: string | null
           id: string
@@ -474,6 +476,7 @@ export type Database = {
           cotisation_rate?: number | null
           created_at?: string | null
           declaration_freq?: Database["public"]["Enums"]["frequency"] | null
+          facturx_enabled?: boolean
           first_name?: string
           iban?: string | null
           id?: string
