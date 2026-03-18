@@ -1,6 +1,10 @@
 # Phase 11 — Facturation récurrente Implementation Plan
 
+> ✅ **COMPLÉTÉE** — 2026-03-17 · 192 tests verts
+
 > **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
+>
+> ⚠️ **INTERDICTION DE COMMIT** — Ne jamais exécuter `git commit`. Seul l'utilisateur a le droit de committer. Préparer le code, mais s'arrêter avant le commit.
 
 **Goal:** Permettre à l'utilisateur de définir des modèles de factures récurrentes (mensuel ou trimestriel) qui génèrent automatiquement des brouillons à la date planifiée, avec possibilité de déclenchement manuel.
 

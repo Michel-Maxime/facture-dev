@@ -24,6 +24,7 @@ const navItems: NavItem[] = [
   { label: 'Tableau de bord', path: '/', icon: 'dashboard' },
   { label: 'Factures', path: '/invoices', icon: 'invoices' },
   { label: 'Devis', path: '/quotes', icon: 'quotes' },
+  { label: 'Récurrentes', path: '/recurring', icon: 'recurring' },
   { label: 'Clients', path: '/clients', icon: 'clients' },
   { label: 'Avoirs', path: '/credit-notes', icon: 'credit-notes' },
   { label: 'Livre de recettes', path: '/ledger', icon: 'ledger' },
@@ -142,6 +143,25 @@ const userInitials = computed(() => {
           aria-hidden="true"
         >
           <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+        </svg>
+
+        <!-- Recurring icon -->
+        <svg
+          v-else-if="item.icon === 'recurring'"
+          class="w-4 h-4 shrink-0"
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M17 1l4 4-4 4" />
+          <path d="M3 11V9a4 4 0 014-4h14" />
+          <path d="M7 23l-4-4 4-4" />
+          <path d="M21 13v2a4 4 0 01-4 4H3" />
         </svg>
 
         <!-- Clients icon -->

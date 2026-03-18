@@ -62,6 +62,11 @@ const router = createRouter({
           component: () => import('@/pages/quotes/index.vue'),
         },
         {
+          path: 'recurring',
+          name: 'recurring',
+          component: () => import('@/pages/recurring/index.vue'),
+        },
+        {
           path: 'clients',
           name: 'clients',
           component: () => import('@/pages/clients/index.vue'),
