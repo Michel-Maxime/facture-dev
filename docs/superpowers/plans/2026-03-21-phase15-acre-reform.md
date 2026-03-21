@@ -1,6 +1,6 @@
 # Phase 15 — Correction ACRE post-juillet 2026
 
-> **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [x]`) syntax for tracking.
 >
 > ⚠️ **INTERDICTION DE COMMIT** — Ne jamais exécuter `git commit`. Seul l'utilisateur a le droit de committer. Préparer le code, mais s'arrêter avant le commit.
 
@@ -22,7 +22,7 @@ La réforme ACRE entre en vigueur le 1er juillet 2026 (LSFSS 2026, art. L131-6-4
 **Files:**
 - Create: `supabase/migrations/015_acre_reform.sql`
 
-- [ ] **Step 1 : Écrire la migration**
+- [x] **Step 1 : Écrire la migration**
 
 ```sql
 -- Migration 015: ACRE reform (LSFSS 2026)
@@ -38,7 +38,7 @@ COMMENT ON COLUMN public.profiles.acre_public_eligible IS
   'ACRE reform (July 2026): true if the user belongs to an eligible population for ACRE (demandeurs emploi, RSA, QPV/ZRR, 18-26 ans, etc.). Only relevant when company_created_at >= 2026-07-01.';
 ```
 
-- [ ] **Step 2 : Appliquer la migration**
+- [x] **Step 2 : Appliquer la migration**
 
 ```bash
 npx supabase db push
@@ -51,7 +51,7 @@ npx supabase db push
 **Files:**
 - Modify: `src/lib/constants.ts`
 
-- [ ] **Step 1 : Ajouter les constantes de la réforme ACRE**
+- [x] **Step 1 : Ajouter les constantes de la réforme ACRE**
 
 Ajouter en fin de fichier, après la fonction `getProratedThreshold` :
 
@@ -78,7 +78,7 @@ export const ACRE_RATES = {
 **Files:**
 - Modify: `src/lib/types.ts` (after regeneration)
 
-- [ ] **Step 1 : Régénérer les types**
+- [x] **Step 1 : Régénérer les types**
 
 ```bash
 npx supabase gen types typescript --local > src/lib/types.ts
@@ -95,7 +95,7 @@ Vérifier que `acre_public_eligible: boolean | null` apparaît dans `profiles.Ro
 **Files:**
 - Modify: `src/composables/useCotisations.ts`
 
-- [ ] **Step 1 : Ajouter les imports des nouvelles constantes**
+- [x] **Step 1 : Ajouter les imports des nouvelles constantes**
 
 Remplacer la ligne d'import :
 
@@ -109,7 +109,7 @@ par :
 import { COTISATION_RATES_2026, ACRE_REFORM_DATE, ACRE_RATES } from '@/lib/constants'
 ```
 
-- [ ] **Step 2 : Créer la fonction `getAcreReductionRate` (exportée, testable)**
+- [x] **Step 2 : Créer la fonction `getAcreReductionRate` (exportée, testable)**
 
 Ajouter cette fonction juste après la fonction `isWithinAcrePeriod`, avant `useCotisations` :
 
@@ -144,7 +144,7 @@ export function isAcrePostReform(companyCreatedAt: string): boolean {
 }
 ```
 
-- [ ] **Step 3 : Modifier le computed `rate` pour utiliser `getAcreReductionRate`**
+- [x] **Step 3 : Modifier le computed `rate` pour utiliser `getAcreReductionRate`**
 
 Remplacer le computed `rate` existant :
 
@@ -180,7 +180,7 @@ par :
 - Modify: `src/utils/validators.ts`
 - Modify: `src/pages/settings.vue`
 
-- [ ] **Step 1 : Ajouter `acre_public_eligible` au schéma Zod du profil**
+- [x] **Step 1 : Ajouter `acre_public_eligible` au schéma Zod du profil**
 
 Dans `src/utils/validators.ts`, dans `profileSchema`, ajouter après `is_acre: z.boolean().default(false),` :
 
@@ -188,7 +188,7 @@ Dans `src/utils/validators.ts`, dans `profileSchema`, ajouter après `is_acre: z
   acre_public_eligible: z.boolean().default(false),
 ```
 
-- [ ] **Step 2 : Ajouter les imports et computed dans `settings.vue`**
+- [x] **Step 2 : Ajouter les imports et computed dans `settings.vue`**
 
 Dans `<script setup>`, ajouter les imports :
 
@@ -213,7 +213,7 @@ const acreReductionPercent = computed(() => {
 })
 ```
 
-- [ ] **Step 3 : Ajouter `acre_public_eligible` dans `buildInitialValues` et le submit**
+- [x] **Step 3 : Ajouter `acre_public_eligible` dans `buildInitialValues` et le submit**
 
 Dans `buildInitialValues` :
 ```typescript
@@ -230,7 +230,7 @@ Dans `onSubmit` :
       acre_public_eligible: values.acre_public_eligible,
 ```
 
-- [ ] **Step 4 : Remplacer le bloc toggle ACRE dans le template**
+- [x] **Step 4 : Remplacer le bloc toggle ACRE dans le template**
 
 Remplacer le bloc ACRE existant par :
 
@@ -300,7 +300,7 @@ Remplacer le bloc ACRE existant par :
           </div>
 ```
 
-- [ ] **Step 5 : Corriger le libellé Factur-X**
+- [x] **Step 5 : Corriger le libellé Factur-X**
 
 Remplacer le texte du toggle Factur-X :
 
@@ -323,7 +323,7 @@ Embarque un XML Factur-X MINIMUM dans vos PDFs. Prépare vos factures pour la fa
 **Files:**
 - Modify: `src/pages/index.vue`
 
-- [ ] **Step 1 : Ajouter les imports et computed**
+- [x] **Step 1 : Ajouter les imports et computed**
 
 ```typescript
 import { isAcrePostReform } from '@/composables/useCotisations'
@@ -336,7 +336,7 @@ const showAcreReformAlert = computed(() => {
 })
 ```
 
-- [ ] **Step 2 : Ajouter l'alerte dans le template**
+- [x] **Step 2 : Ajouter l'alerte dans le template**
 
 Après le bloc d'alerte "compte bancaire dédié" existant :
 
@@ -367,14 +367,14 @@ Après le bloc d'alerte "compte bancaire dédié" existant :
 **Files:**
 - Modify: `tests/unit/composables/useCotisations.test.ts`
 
-- [ ] **Step 1 : Ajouter les imports**
+- [x] **Step 1 : Ajouter les imports**
 
 ```typescript
 import { isWithinAcrePeriod, getAcreReductionRate, isAcrePostReform } from '@/composables/useCotisations'
 import { ACRE_RATES } from '@/lib/constants'
 ```
 
-- [ ] **Step 2 : Ajouter les suites de tests**
+- [x] **Step 2 : Ajouter les suites de tests**
 
 ```typescript
 describe('getAcreReductionRate', () => {
@@ -434,7 +434,7 @@ describe('isAcrePostReform', () => {
 **Files:**
 - Modify: `tests/unit/composables/useCotisations.composable.test.ts`
 
-- [ ] **Step 1 : Ajouter `acre_public_eligible` dans `makeProfile`**
+- [x] **Step 1 : Ajouter `acre_public_eligible` dans `makeProfile`**
 
 ```typescript
 function makeProfile(overrides: Partial<Profile> = {}): Profile {
@@ -448,7 +448,7 @@ function makeProfile(overrides: Partial<Profile> = {}): Profile {
 }
 ```
 
-- [ ] **Step 2 : Ajouter les tests ACRE reform**
+- [x] **Step 2 : Ajouter les tests ACRE reform**
 
 ```typescript
 describe('useCotisations - ACRE reform rate', () => {
@@ -483,7 +483,7 @@ describe('useCotisations - ACRE reform rate', () => {
 
 ### Task 9 : Exécuter les tests
 
-- [ ] **Step 1 : Lancer la suite complète**
+- [x] **Step 1 : Lancer la suite complète**
 
 ```bash
 pnpm test
@@ -491,7 +491,7 @@ pnpm test
 
 Résultat attendu : tous les tests passent, 0 régression.
 
-- [ ] **Step 2 : Vérification visuelle**
+- [x] **Step 2 : Vérification visuelle**
 
 1. Settings : libellé ACRE change dynamiquement selon la date de création
 2. Settings : alerte bleue visible si `company_created_at >= 2026-07-01` ET `is_acre = true`
@@ -518,14 +518,14 @@ Résultat attendu : tous les tests passent, 0 régression.
 
 ## Critères de succès
 
-- [ ] `getAcreReductionRate('2026-06-30')` === `0.5`
-- [ ] `getAcreReductionRate('2026-07-01')` === `0.75`
-- [ ] `isAcrePostReform('2026-06-30')` === `false`
-- [ ] `isAcrePostReform('2026-07-01')` === `true`
-- [ ] Composable : rate = `0.128` pour ACRE pre-reform BNC_SSI (0.256 × 0.5)
-- [ ] Composable : rate = `0.192` pour ACRE post-reform BNC_SSI (0.256 × 0.75)
-- [ ] Différence de 1 920 EUR sur 30k CA entre pre et post reform vérifiée
-- [ ] Libellé ACRE dynamique dans settings
-- [ ] Alerte bleue ACRE reform dans settings et dashboard
-- [ ] Libellé Factur-X corrigé
-- [ ] `pnpm test` : 0 failures
+- [x] `getAcreReductionRate('2026-06-30')` === `0.5`
+- [x] `getAcreReductionRate('2026-07-01')` === `0.75`
+- [x] `isAcrePostReform('2026-06-30')` === `false`
+- [x] `isAcrePostReform('2026-07-01')` === `true`
+- [x] Composable : rate = `0.128` pour ACRE pre-reform BNC_SSI (0.256 × 0.5)
+- [x] Composable : rate = `0.192` pour ACRE post-reform BNC_SSI (0.256 × 0.75)
+- [x] Différence de 1 920 EUR sur 30k CA entre pre et post reform vérifiée
+- [x] Libellé ACRE dynamique dans settings
+- [x] Alerte bleue ACRE reform dans settings et dashboard
+- [x] Libellé Factur-X corrigé
+- [x] `pnpm test` : 0 failures

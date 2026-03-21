@@ -1,6 +1,6 @@
 # Phase 17 — UX ACRE période expirée
 
-> **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [x]`) syntax for tracking.
 >
 > ⚠️ **INTERDICTION DE COMMIT** — Ne jamais exécuter `git commit`. Seul l'utilisateur a le droit de committer. Préparer le code, mais s'arrêter avant le commit.
 
@@ -45,7 +45,7 @@ Il pense que l'ACRE est actif alors qu'il est expiré. Confusion garantie.
 - Modify: `src/composables/useCotisations.ts`
 - Modify: `tests/unit/composables/useCotisations.test.ts`
 
-- [ ] **Step 1 : Écrire les tests pour `getAcreEndDate`**
+- [x] **Step 1 : Écrire les tests pour `getAcreEndDate`**
 
 Dans `tests/unit/composables/useCotisations.test.ts` :
 
@@ -93,7 +93,7 @@ describe('getAcreEndDate', () => {
 })
 ```
 
-- [ ] **Step 2 : Lancer les tests pour vérifier qu'ils échouent**
+- [x] **Step 2 : Lancer les tests pour vérifier qu'ils échouent**
 
 ```bash
 pnpm test -- --run tests/unit/composables/useCotisations.test.ts
@@ -101,7 +101,7 @@ pnpm test -- --run tests/unit/composables/useCotisations.test.ts
 
 Résultat attendu : FAIL — `getAcreEndDate is not a function`
 
-- [ ] **Step 3 : Extraire `getAcreEndDate` et refactoriser `isWithinAcrePeriod`**
+- [x] **Step 3 : Extraire `getAcreEndDate` et refactoriser `isWithinAcrePeriod`**
 
 Dans `src/composables/useCotisations.ts`, remplacer la fonction `isWithinAcrePeriod` par :
 
@@ -140,7 +140,7 @@ export function isWithinAcrePeriod(companyCreatedAt: string, now: Date = new Dat
 }
 ```
 
-- [ ] **Step 4 : Lancer les tests pour vérifier qu'ils passent**
+- [x] **Step 4 : Lancer les tests pour vérifier qu'ils passent**
 
 ```bash
 pnpm test -- --run
@@ -157,7 +157,7 @@ Résultat attendu : tous les tests passent (214+ tests, 0 failure)
 **Files:**
 - Modify: `src/pages/settings.vue`
 
-- [ ] **Step 1 : Ajouter les imports et les computed**
+- [x] **Step 1 : Ajouter les imports et les computed**
 
 Dans `<script setup>`, mettre à jour l'import depuis `useCotisations` :
 
@@ -187,7 +187,7 @@ const acreEndDateFormatted = computed(() => {
 })
 ```
 
-- [ ] **Step 2 : Remplacer le bloc ACRE toggle dans le template**
+- [x] **Step 2 : Remplacer le bloc ACRE toggle dans le template**
 
 Remplacer le bloc `<!-- ACRE toggle -->` **et les blocs qui le suivent** (`<!-- ACRE post-reform alert -->` et `<!-- ACRE public eligible checkbox -->`) par le code ci-dessous.
 
@@ -279,7 +279,7 @@ Les blocs post-reform sont conditionnés à `!acreExpired` pour ne pas afficher 
 **Files:**
 - Modify: `src/pages/index.vue`
 
-- [ ] **Step 1 : Ajouter les imports et le computed**
+- [x] **Step 1 : Ajouter les imports et le computed**
 
 Dans `<script setup>`, mettre à jour l'import :
 
@@ -298,7 +298,7 @@ const showAcreExpiredNote = computed(() => {
 })
 ```
 
-- [ ] **Step 2 : Ajouter la note dans le template**
+- [x] **Step 2 : Ajouter la note dans le template**
 
 Dans la carte "Cotisations estimées", remplacer la ligne du taux :
 
@@ -328,7 +328,7 @@ par :
 
 ### Task 4 : Vérifier les tests et le rendu visuel
 
-- [ ] **Step 1 : Lancer la suite complète**
+- [x] **Step 1 : Lancer la suite complète**
 
 ```bash
 pnpm test -- --run
@@ -336,7 +336,7 @@ pnpm test -- --run
 
 Résultat attendu : tous les tests passent, 0 régression.
 
-- [ ] **Step 2 : Vérification visuelle**
+- [x] **Step 2 : Vérification visuelle**
 
 Pour tester avec le profil existant (`company_created_at = 2025-01-01`, `is_acre = true`) :
 
@@ -348,11 +348,11 @@ Pour tester avec le profil existant (`company_created_at = 2025-01-01`, `is_acre
 
 ## Critères de succès
 
-- [ ] `getAcreEndDate('2025-01-01')` retourne le 31 décembre 2025
-- [ ] `getAcreEndDate('2025-03-15')` retourne le 31 mars 2026
-- [ ] `isWithinAcrePeriod` reste cohérent avec `getAcreEndDate`
-- [ ] Settings : badge "Expiré" visible quand période passée
-- [ ] Settings : texte affiche la date de fin exacte
-- [ ] Settings : couleur du toggle est grise quand expiré
-- [ ] Dashboard : note "— ACRE expiré" visible en orange
-- [ ] `pnpm test` : 0 failures
+- [x] `getAcreEndDate('2025-01-01')` retourne le 31 décembre 2025
+- [x] `getAcreEndDate('2025-03-15')` retourne le 31 mars 2026
+- [x] `isWithinAcrePeriod` reste cohérent avec `getAcreEndDate`
+- [x] Settings : badge "Expiré" visible quand période passée
+- [x] Settings : texte affiche la date de fin exacte
+- [x] Settings : couleur du toggle est grise quand expiré
+- [x] Dashboard : note "— ACRE expiré" visible en orange
+- [x] `pnpm test` : 0 failures
