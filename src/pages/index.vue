@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import { supabase } from '@/lib/supabase'
 import { useInvoices } from '@/composables/useInvoices'
 import { useThresholds } from '@/composables/useThresholds'
-import { useCotisations, isAcrePostReform } from '@/composables/useCotisations'
+import { useCotisations, isAcrePostReform, isWithinAcrePeriod } from '@/composables/useCotisations'
 import { useAuthStore } from '@/stores/auth'
 import { formatCurrency, formatDate, formatPercentage } from '@/utils/formatters'
 import { THRESHOLDS } from '@/lib/constants'
@@ -34,6 +34,13 @@ const showAcreReformAlert = computed(() => {
   if (!profile?.is_acre) return false
   if (!profile.company_created_at) return false
   return isAcrePostReform(profile.company_created_at)
+})
+
+const showAcreExpiredNote = computed(() => {
+  const profile = authStore.profile
+  if (!profile?.is_acre) return false
+  if (!profile.company_created_at) return false
+  return !isWithinAcrePeriod(profile.company_created_at)
 })
 
 async function loadStats() {
@@ -233,6 +240,12 @@ onMounted(async () => {
           </div>
           <p class="text-xs text-[#9CA3AF]">
             Taux appliqué : {{ formatPercentage(cotisations.rate.value) }}
+            <span
+              v-if="showAcreExpiredNote"
+              class="text-[#D97706]"
+            >
+              — ACRE expiré
+            </span>
           </p>
         </div>
       </Card>

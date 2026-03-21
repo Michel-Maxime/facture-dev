@@ -3,38 +3,36 @@ import { COTISATION_RATES_2026, ACRE_REFORM_DATE, ACRE_RATES } from '@/lib/const
 import { useAuthStore } from '@/stores/auth'
 
 /**
- * Calcule si la date `now` est encore dans la période ACRE.
- * Règle URSSAF : ACRE s'applique jusqu'à la fin du 4ème trimestre civil
- * COMPLET suivant la date de création.
+ * Returns the date at which the ACRE period ends for a given company creation date.
+ * URSSAF rule: ACRE applies until the end of the 4th complete civil quarter
+ * following the creation date.
  *
- * Règle simplifiée issue des cas réels URSSAF :
- * - Cas spécial Jan 1 : ACRE jusqu'au 31 déc de la même année (4 trimestres Q1→Q4)
- * - Tous les autres cas : ACRE jusqu'à la fin du même trimestre, l'année suivante
+ * Special case: created on Jan 1 → ACRE ends Dec 31 of the same year (4 full quarters Q1→Q4).
+ * General case: ACRE ends at the end of the same quarter, the following year.
  *
- * Exemples :
- * - créé le 15 mars 2025 (Q1) → fin Q1 2026 = 31 mars 2026
- * - créé le 1er janv 2025    → fin Q4 2025 = 31 déc 2025
- * - créé le 1er oct 2025 (Q4) → fin Q4 2026 = 31 déc 2026
- * - créé le 15 oct 2025 (Q4) → fin Q4 2026 = 31 déc 2026
+ * Examples:
+ * - created Mar 15 2025 (Q1) → end of Q1 2026 = Mar 31 2026
+ * - created Jan 1 2025       → end of Q4 2025 = Dec 31 2025
+ * - created Oct 1 2025 (Q4)  → end of Q4 2026 = Dec 31 2026
  */
-export function isWithinAcrePeriod(companyCreatedAt: string, now: Date = new Date()): boolean {
+export function getAcreEndDate(companyCreatedAt: string): Date {
   const created = new Date(companyCreatedAt)
 
-  let acreEndDate: Date
-
-  // Cas spécial : créé exactement le 1er janvier → fin du Q4 de la même année
+  // Special case: created exactly on Jan 1 → end of Q4 same year
   if (created.getMonth() === 0 && created.getDate() === 1) {
-    acreEndDate = new Date(created.getFullYear(), 11, 31, 23, 59, 59, 999)
-  } else {
-    // Règle générale : fin du même trimestre, l'année suivante
-    const createdQuarter = Math.floor(created.getMonth() / 3) // 0=Q1..3=Q4
-    // Dernier mois du trimestre (1-indexed) : Q0→3, Q1→6, Q2→9, Q3→12
-    const lastMonthOfQuarter = (createdQuarter + 1) * 3
-    // new Date(year, month, 0) = dernier jour du mois précédent
-    acreEndDate = new Date(created.getFullYear() + 1, lastMonthOfQuarter, 0, 23, 59, 59, 999)
+    return new Date(created.getFullYear(), 11, 31, 23, 59, 59, 999)
   }
 
-  return now <= acreEndDate
+  // General rule: end of same quarter, next year
+  const createdQuarter = Math.floor(created.getMonth() / 3) // 0=Q1..3=Q4
+  // Last month of quarter (1-indexed): Q0→3, Q1→6, Q2→9, Q3→12
+  const lastMonthOfQuarter = (createdQuarter + 1) * 3
+  // new Date(year, month, 0) = last day of previous month
+  return new Date(created.getFullYear() + 1, lastMonthOfQuarter, 0, 23, 59, 59, 999)
+}
+
+export function isWithinAcrePeriod(companyCreatedAt: string, now: Date = new Date()): boolean {
+  return now <= getAcreEndDate(companyCreatedAt)
 }
 
 /**

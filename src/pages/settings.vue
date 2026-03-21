@@ -4,7 +4,7 @@ import { useForm } from 'vee-validate'
 import { toTypedSchema } from '@vee-validate/zod'
 import { profileSchema } from '@/utils/validators'
 import type { ProfileFormData } from '@/utils/validators'
-import { isAcrePostReform } from '@/composables/useCotisations'
+import { isAcrePostReform, isWithinAcrePeriod, getAcreEndDate } from '@/composables/useCotisations'
 import { ACRE_RATES } from '@/lib/constants'
 import { useAuthStore } from '@/stores/auth'
 import { useNotificationsStore } from '@/stores/notifications'
@@ -118,6 +118,24 @@ const acreReductionPercent = computed(() => {
   return postReform.value
     ? Math.round(ACRE_RATES.AFTER_REFORM * 100)
     : Math.round(ACRE_RATES.BEFORE_REFORM * 100)
+})
+
+const acreExpired = computed(() => {
+  const created = companyCreatedAt.value
+  if (!created || !isAcre.value) return false
+  return !isWithinAcrePeriod(created)
+})
+
+const acreEndDateFormatted = computed(() => {
+  const created = companyCreatedAt.value
+  if (!created) return ''
+  const endDate = getAcreEndDate(created)
+  if (isNaN(endDate.getTime())) return ''
+  return new Intl.DateTimeFormat('fr-FR', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  }).format(endDate)
 })
 
 const onSubmit = handleSubmit(async (values) => {
@@ -379,10 +397,21 @@ const onSubmit = handleSubmit(async (values) => {
 
           <!-- ACRE toggle -->
           <div class="flex items-center justify-between gap-4 pt-1">
-            <div>
-              <p class="text-sm font-medium text-[#374151]">Bénéficiaire ACRE</p>
+            <div class="flex-1">
+              <div class="flex items-center gap-2">
+                <p class="text-sm font-medium text-[#374151]">Bénéficiaire ACRE</p>
+                <span
+                  v-if="acreExpired"
+                  class="inline-flex items-center rounded-full bg-[#F3F4F6] px-2 py-0.5 text-xs font-medium text-[#6B7280]"
+                >
+                  Expiré
+                </span>
+              </div>
               <p class="text-xs text-[#6B7280] mt-0.5">
-                <template v-if="postReform">
+                <template v-if="acreExpired">
+                  Période ACRE terminée le {{ acreEndDateFormatted }} — taux plein appliqué
+                </template>
+                <template v-else-if="postReform">
                   Réduit les cotisations de {{ acreReductionPercent }} % pendant la 1re année (sous conditions d'éligibilité)
                 </template>
                 <template v-else>
@@ -397,7 +426,7 @@ const onSubmit = handleSubmit(async (values) => {
               v-bind="isAcreAttrs"
               :class="[
                 'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#7C3AED] focus:ring-offset-2',
-                isAcre ? 'bg-[#7C3AED]' : 'bg-[#D1D5DB]',
+                isAcre && !acreExpired ? 'bg-[#7C3AED]' : 'bg-[#D1D5DB]',
               ]"
               @click="isAcre = !isAcre"
             >
@@ -410,9 +439,9 @@ const onSubmit = handleSubmit(async (values) => {
             </button>
           </div>
 
-          <!-- ACRE post-reform alert -->
+          <!-- ACRE post-reform alert (masqué si période expirée) -->
           <div
-            v-if="postReform && isAcre"
+            v-if="postReform && isAcre && !acreExpired"
             class="flex items-start gap-3 bg-[#EFF6FF] border border-[#BFDBFE] rounded-lg px-4 py-3"
             role="alert"
           >
@@ -427,8 +456,8 @@ const onSubmit = handleSubmit(async (values) => {
             </div>
           </div>
 
-          <!-- ACRE public eligible checkbox (post-reform only) -->
-          <div v-if="postReform && isAcre" class="flex items-center gap-3 pl-8">
+          <!-- ACRE public eligible checkbox (post-reform uniquement, masqué si expiré) -->
+          <div v-if="postReform && isAcre && !acreExpired" class="flex items-center gap-3 pl-8">
             <input
               id="acre-public-eligible"
               v-model="acrePublicEligible"

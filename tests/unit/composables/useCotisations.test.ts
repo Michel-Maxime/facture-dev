@@ -69,6 +69,40 @@ describe('isWithinAcrePeriod', () => {
   })
 })
 
+describe('getAcreEndDate', () => {
+  it('created Jan 1 → end date is Dec 31 same year', () => {
+    const end = getAcreEndDate('2025-01-01')
+    expect(end.getFullYear()).toBe(2025)
+    expect(end.getMonth()).toBe(11) // December (0-indexed)
+    expect(end.getDate()).toBe(31)
+  })
+
+  it('created Mar 15 (Q1) → end date is Mar 31 next year', () => {
+    const end = getAcreEndDate('2025-03-15')
+    expect(end.getFullYear()).toBe(2026)
+    expect(end.getMonth()).toBe(2) // March (0-indexed)
+    expect(end.getDate()).toBe(31)
+  })
+
+  it('created Oct 1 (Q4) → end date is Dec 31 next year', () => {
+    const end = getAcreEndDate('2025-10-01')
+    expect(end.getFullYear()).toBe(2026)
+    expect(end.getMonth()).toBe(11) // December (0-indexed)
+    expect(end.getDate()).toBe(31)
+  })
+
+  it('isWithinAcrePeriod is consistent with getAcreEndDate', () => {
+    const createdAt = '2025-03-15'
+    const endDate = getAcreEndDate(createdAt)
+    // One second before end → still in period
+    const beforeEnd = new Date(endDate.getTime() - 1000)
+    expect(isWithinAcrePeriod(createdAt, beforeEnd)).toBe(true)
+    // One second after end → out of period
+    const afterEnd = new Date(endDate.getTime() + 1000)
+    expect(isWithinAcrePeriod(createdAt, afterEnd)).toBe(false)
+  })
+})
+
 describe('getAcreReductionRate', () => {
   it('returns 0.5 (50% reduction) for company created before July 2026', () => {
     expect(getAcreReductionRate('2026-06-30')).toBe(0.5)
