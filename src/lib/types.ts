@@ -426,6 +426,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          acre_public_eligible: boolean | null
           address: string
           bic: string | null
           city: string
@@ -447,6 +448,7 @@ export type Database = {
           vat_regime: Database["public"]["Enums"]["vat_regime"] | null
         }
         Insert: {
+          acre_public_eligible?: boolean | null
           address: string
           bic?: string | null
           city: string
@@ -468,6 +470,7 @@ export type Database = {
           vat_regime?: Database["public"]["Enums"]["vat_regime"] | null
         }
         Update: {
+          acre_public_eligible?: boolean | null
           address?: string
           bic?: string | null
           city?: string

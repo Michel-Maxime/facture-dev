@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import { supabase } from '@/lib/supabase'
 import { useInvoices } from '@/composables/useInvoices'
 import { useThresholds } from '@/composables/useThresholds'
-import { useCotisations } from '@/composables/useCotisations'
+import { useCotisations, isAcrePostReform } from '@/composables/useCotisations'
 import { useAuthStore } from '@/stores/auth'
 import { formatCurrency, formatDate, formatPercentage } from '@/utils/formatters'
 import { THRESHOLDS } from '@/lib/constants'
@@ -28,6 +28,13 @@ const thresholds = useThresholds(caEncaisse)
 const cotisations = useCotisations(caEncaisse)
 
 const recentInvoices = computed(() => invoices.value.slice(0, 5))
+
+const showAcreReformAlert = computed(() => {
+  const profile = authStore.profile
+  if (!profile?.is_acre) return false
+  if (!profile.company_created_at) return false
+  return isAcrePostReform(profile.company_created_at)
+})
 
 async function loadStats() {
   if (!authStore.user) return
@@ -82,6 +89,23 @@ onMounted(async () => {
       <p class="text-sm text-[#6B7280] mt-0.5">
         Bonjour {{ authStore.profile?.first_name }} — voici votre activité du moment.
       </p>
+    </div>
+
+    <!-- ACRE reform alert -->
+    <div
+      v-if="showAcreReformAlert"
+      class="flex items-start gap-3 bg-[#EFF6FF] border border-[#BFDBFE] rounded-xl px-4 py-3"
+      role="alert"
+    >
+      <svg class="h-5 w-5 text-[#3B82F6] shrink-0 mt-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+      </svg>
+      <div>
+        <p class="text-sm font-semibold text-[#1E40AF]">Réforme ACRE active</p>
+        <p class="text-xs text-[#1E40AF] mt-0.5">
+          Votre entreprise a été créée après le 1er juillet 2026 : vos cotisations ACRE sont réduites de 25 % (au lieu de 50 % avant la réforme). Le taux appliqué ci-dessous en tient compte.
+        </p>
+      </div>
     </div>
 
     <!-- Bank account alert -->

@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useForm } from 'vee-validate'
 import { toTypedSchema } from '@vee-validate/zod'
 import { profileSchema } from '@/utils/validators'
 import type { ProfileFormData } from '@/utils/validators'
+import { isAcrePostReform } from '@/composables/useCotisations'
+import { ACRE_RATES } from '@/lib/constants'
 import { useAuthStore } from '@/stores/auth'
 import { useNotificationsStore } from '@/stores/notifications'
 import { supabase } from '@/lib/supabase'
@@ -76,6 +78,7 @@ function buildInitialValues(): ProfileFormData {
     declaration_freq: p?.declaration_freq ?? 'QUARTERLY',
     cotisation_rate: p?.cotisation_rate ?? 0.256,
     is_acre: p?.is_acre ?? false,
+    acre_public_eligible: p?.acre_public_eligible ?? false,
     facturx_enabled: p?.facturx_enabled ?? true,
   }
 }
@@ -102,7 +105,20 @@ const [vatRegime, vatRegimeAttrs] = defineField('vat_regime')
 const [declarationFreq, declarationFreqAttrs] = defineField('declaration_freq')
 const [cotisationRate, cotisationRateAttrs] = defineField('cotisation_rate')
 const [isAcre, isAcreAttrs] = defineField('is_acre')
+const [acrePublicEligible, acrePublicEligibleAttrs] = defineField('acre_public_eligible')
 const [facturxEnabled, facturxEnabledAttrs] = defineField('facturx_enabled')
+
+const postReform = computed(() => {
+  const created = companyCreatedAt.value
+  if (!created) return false
+  return isAcrePostReform(created)
+})
+
+const acreReductionPercent = computed(() => {
+  return postReform.value
+    ? Math.round(ACRE_RATES.AFTER_REFORM * 100)
+    : Math.round(ACRE_RATES.BEFORE_REFORM * 100)
+})
 
 const onSubmit = handleSubmit(async (values) => {
   if (!authStore.user) return
@@ -126,6 +142,7 @@ const onSubmit = handleSubmit(async (values) => {
       declaration_freq: values.declaration_freq,
       cotisation_rate: values.cotisation_rate,
       is_acre: values.is_acre,
+      acre_public_eligible: values.acre_public_eligible,
       facturx_enabled: values.facturx_enabled,
       updated_at: new Date().toISOString(),
     })
@@ -365,7 +382,12 @@ const onSubmit = handleSubmit(async (values) => {
             <div>
               <p class="text-sm font-medium text-[#374151]">Bénéficiaire ACRE</p>
               <p class="text-xs text-[#6B7280] mt-0.5">
-                Réduit les cotisations de 50 % la première année d'activité
+                <template v-if="postReform">
+                  Réduit les cotisations de {{ acreReductionPercent }} % pendant la 1re année (sous conditions d'éligibilité)
+                </template>
+                <template v-else>
+                  Réduit les cotisations de {{ acreReductionPercent }} % pendant la 1re année d'activité
+                </template>
               </p>
             </div>
             <button
@@ -386,6 +408,37 @@ const onSubmit = handleSubmit(async (values) => {
                 ]"
               />
             </button>
+          </div>
+
+          <!-- ACRE post-reform alert -->
+          <div
+            v-if="postReform && isAcre"
+            class="flex items-start gap-3 bg-[#EFF6FF] border border-[#BFDBFE] rounded-lg px-4 py-3"
+            role="alert"
+          >
+            <svg class="h-5 w-5 text-[#3B82F6] shrink-0 mt-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+            </svg>
+            <div>
+              <p class="text-sm font-semibold text-[#1E40AF]">Réforme ACRE — juillet 2026</p>
+              <p class="text-xs text-[#1E40AF] mt-0.5">
+                Pour les entreprises créées à partir du 1er juillet 2026, l'ACRE est réservée à certains publics (demandeurs d'emploi, RSA, zones QPV/ZRR, moins de 26 ans, CAPE) et le taux de réduction passe à 25 %.
+              </p>
+            </div>
+          </div>
+
+          <!-- ACRE public eligible checkbox (post-reform only) -->
+          <div v-if="postReform && isAcre" class="flex items-center gap-3 pl-8">
+            <input
+              id="acre-public-eligible"
+              v-model="acrePublicEligible"
+              v-bind="acrePublicEligibleAttrs"
+              type="checkbox"
+              class="h-4 w-4 rounded border-[#D1D5DB] text-[#7C3AED] focus:ring-[#7C3AED]"
+            />
+            <label for="acre-public-eligible" class="text-sm text-[#374151]">
+              Je confirme appartenir à un public éligible à l'ACRE
+            </label>
           </div>
 
           <!-- Factur-X toggle -->

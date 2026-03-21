@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { COTISATION_RATES_2026 } from '@/lib/constants'
-import { isWithinAcrePeriod } from '@/composables/useCotisations'
+import { COTISATION_RATES_2026, ACRE_RATES } from '@/lib/constants'
+import { isWithinAcrePeriod, getAcreEndDate, getAcreReductionRate, isAcrePostReform } from '@/composables/useCotisations'
 
 describe('cotisation rates 2026', () => {
   it('BNC_SSI rate is 25.6%', () => {
@@ -66,5 +66,56 @@ describe('isWithinAcrePeriod', () => {
     const createdAt = '2025-10-01'
     expect(isWithinAcrePeriod(createdAt, new Date('2026-12-31T23:59:00'))).toBe(true)
     expect(isWithinAcrePeriod(createdAt, new Date('2027-01-01T00:00:00'))).toBe(false)
+  })
+})
+
+describe('getAcreReductionRate', () => {
+  it('returns 0.5 (50% reduction) for company created before July 2026', () => {
+    expect(getAcreReductionRate('2026-06-30')).toBe(0.5)
+    expect(getAcreReductionRate('2024-01-15')).toBe(0.5)
+  })
+
+  it('returns 0.75 (25% reduction) for company created on July 1st 2026', () => {
+    expect(getAcreReductionRate('2026-07-01')).toBe(0.75)
+  })
+
+  it('returns 0.75 for company created after July 2026', () => {
+    expect(getAcreReductionRate('2026-09-15')).toBe(0.75)
+    expect(getAcreReductionRate('2027-03-01')).toBe(0.75)
+  })
+
+  it('correctly impacts cotisation calculation: before reform', () => {
+    // 30000 EUR CA x 25.6% BNC_SSI = 7680 EUR base → x 0.5 = 3840 EUR
+    const base = 30000 * 0.256
+    expect(base * getAcreReductionRate('2026-03-15')).toBeCloseTo(3840, 0)
+  })
+
+  it('correctly impacts cotisation calculation: after reform', () => {
+    // 30000 EUR CA x 25.6% BNC_SSI = 7680 EUR base → x 0.75 = 5760 EUR
+    const base = 30000 * 0.256
+    expect(base * getAcreReductionRate('2026-08-01')).toBeCloseTo(5760, 0)
+  })
+
+  it('difference between pre and post reform is 1920 EUR on 30k CA', () => {
+    const base = 30000 * 0.256
+    const preReform = base * getAcreReductionRate('2026-06-15')
+    const postReform = base * getAcreReductionRate('2026-07-15')
+    expect(postReform - preReform).toBeCloseTo(base * 0.25, 0)
+  })
+})
+
+describe('isAcrePostReform', () => {
+  it('returns false for company created before July 2026', () => {
+    expect(isAcrePostReform('2026-06-30')).toBe(false)
+    expect(isAcrePostReform('2025-01-01')).toBe(false)
+  })
+
+  it('returns true for company created on July 1st 2026', () => {
+    expect(isAcrePostReform('2026-07-01')).toBe(true)
+  })
+
+  it('returns true for company created after July 2026', () => {
+    expect(isAcrePostReform('2026-12-01')).toBe(true)
+    expect(isAcrePostReform('2027-06-01')).toBe(true)
   })
 })

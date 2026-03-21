@@ -34,3 +34,17 @@ export function getProratedThreshold(annual: number, companyCreatedAt: Date): nu
   )
   return Math.round(annual * (daysRemaining / 365))
 }
+
+/**
+ * ACRE reform — LSFSS 2026
+ * Before July 1st 2026: ACRE is automatic, 50% reduction for 12 months.
+ * After July 1st 2026: ACRE restricted to eligible populations, 25% reduction for 12 months.
+ */
+export const ACRE_REFORM_DATE = '2026-07-01' as const
+
+export const ACRE_RATES = {
+  /** Reduction rate before reform: cotisations × (1 - 0.5) = half rate */
+  BEFORE_REFORM: 0.5,
+  /** Reduction rate after reform: cotisations × (1 - 0.25) = 75% of full rate */
+  AFTER_REFORM: 0.25,
+} as const

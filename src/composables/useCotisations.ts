@@ -1,5 +1,5 @@
 import { computed } from 'vue'
-import { COTISATION_RATES_2026 } from '@/lib/constants'
+import { COTISATION_RATES_2026, ACRE_REFORM_DATE, ACRE_RATES } from '@/lib/constants'
 import { useAuthStore } from '@/stores/auth'
 
 /**
@@ -37,6 +37,35 @@ export function isWithinAcrePeriod(companyCreatedAt: string, now: Date = new Dat
   return now <= acreEndDate
 }
 
+/**
+ * Returns the ACRE reduction factor based on company creation date.
+ *
+ * LSFSS 2026 reform:
+ * - Created before 2026-07-01: 50% reduction (base × 0.5)
+ * - Created on/after 2026-07-01: 25% reduction (base × 0.75)
+ *
+ * @param companyCreatedAt - ISO date string of company creation
+ * @returns The factor to multiply the base cotisation rate by.
+ *          0.5 means "multiply base by 0.5" (50% reduction).
+ *          0.75 means "multiply base by 0.75" (25% reduction).
+ */
+export function getAcreReductionRate(companyCreatedAt: string): number {
+  const created = new Date(companyCreatedAt)
+  const reformDate = new Date(ACRE_REFORM_DATE)
+  if (created >= reformDate) {
+    return 1 - ACRE_RATES.AFTER_REFORM  // 0.75
+  }
+  return 1 - ACRE_RATES.BEFORE_REFORM   // 0.5
+}
+
+/**
+ * Returns true if the company was created on or after the ACRE reform date.
+ * Used by the UI to display the correct labels and alerts.
+ */
+export function isAcrePostReform(companyCreatedAt: string): boolean {
+  return new Date(companyCreatedAt) >= new Date(ACRE_REFORM_DATE)
+}
+
 export function useCotisations(revenue: { value: number }) {
   const authStore = useAuthStore()
 
@@ -49,7 +78,11 @@ export function useCotisations(revenue: { value: number }) {
 
   const rate = computed(() => {
     const base = authStore.profile?.cotisation_rate ?? COTISATION_RATES_2026.BNC_SSI
-    if (authStore.profile?.is_acre && isFirstYear.value) return base / 2
+    if (authStore.profile?.is_acre && isFirstYear.value) {
+      const created = authStore.profile?.company_created_at
+      if (!created) return base
+      return base * getAcreReductionRate(created)
+    }
     return base
   })
 

@@ -19,6 +19,8 @@ function makeProfile(overrides: Partial<Profile> = {}): Profile {
     vat_regime: 'FRANCHISE',
     declaration_freq: 'QUARTERLY',
     cotisation_rate: COTISATION_RATES_2026.BNC_SSI,
+    is_acre: null,
+    acre_public_eligible: false,
     code_ape: null,
     iban: null,
     bic: null,
@@ -208,5 +210,30 @@ describe('useCotisations - Urssaf quarterly deadline dates', () => {
     const { nextDeadline } = useCotisations(revenue)
     // The old bug returned "15 avril" instead of "30 avril"
     expect(nextDeadline.value).not.toContain('15')
+  })
+})
+
+describe('useCotisations - ACRE reform rate', () => {
+  beforeEach(() => { setActivePinia(createPinia()) })
+
+  it('applies 50% reduction (rate × 0.5) for ACRE before reform', () => {
+    const authStore = useAuthStore()
+    authStore.setProfile(makeProfile({ is_acre: true, company_created_at: '2026-03-15', cotisation_rate: 0.256 }))
+    const { rate } = useCotisations(ref(10000))
+    expect(rate.value).toBeCloseTo(0.128, 4) // 0.256 × 0.5
+  })
+
+  it('applies 25% reduction (rate × 0.75) for ACRE after reform', () => {
+    const authStore = useAuthStore()
+    authStore.setProfile(makeProfile({ is_acre: true, company_created_at: '2026-08-01', cotisation_rate: 0.256 }))
+    const { rate } = useCotisations(ref(10000))
+    expect(rate.value).toBeCloseTo(0.192, 4) // 0.256 × 0.75
+  })
+
+  it('applies full rate when ACRE is disabled regardless of creation date', () => {
+    const authStore = useAuthStore()
+    authStore.setProfile(makeProfile({ is_acre: false, company_created_at: '2026-08-01', cotisation_rate: 0.256 }))
+    const { rate } = useCotisations(ref(10000))
+    expect(rate.value).toBeCloseTo(0.256, 4)
   })
 })
