@@ -393,7 +393,7 @@ const onSubmit = handleSubmit(async (values) => {
             <div>
               <p class="text-sm font-medium text-[#374151]">Factur-X (facturation électronique)</p>
               <p class="text-xs text-[#6B7280] mt-0.5">
-                Embarque un XML Factur-X MINIMUM dans vos PDFs. Requis pour l'obligation légale de 2026/2027.
+                Embarque un XML Factur-X MINIMUM dans vos PDFs. Prépare vos factures pour la réforme e-invoicing — profil complet EN 16931 requis pour la transmission via Plateforme Agréée (sept. 2027).
               </p>
             </div>
             <button
