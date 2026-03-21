@@ -423,12 +423,14 @@ const onSubmit = handleSubmit(async (values) => {
               type="button"
               role="switch"
               :aria-checked="isAcre"
+              :disabled="acreExpired"
               v-bind="isAcreAttrs"
               :class="[
-                'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#7C3AED] focus:ring-offset-2',
+                'relative inline-flex h-6 w-11 shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#7C3AED] focus:ring-offset-2',
+                acreExpired ? 'cursor-not-allowed opacity-60' : 'cursor-pointer',
                 isAcre && !acreExpired ? 'bg-[#7C3AED]' : 'bg-[#D1D5DB]',
               ]"
-              @click="isAcre = !isAcre"
+              @click="!acreExpired && (isAcre = !isAcre)"
             >
               <span
                 :class="[
